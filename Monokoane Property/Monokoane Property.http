@@ -1,0 +1,6 @@
+@Monokoane_Property_HostAddress = http://localhost:5153
+
+GET {{Monokoane_Property_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
