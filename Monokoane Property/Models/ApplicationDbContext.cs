@@ -2,7 +2,7 @@
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using MonoxProperty.Entities;
 
-namespace Property
+namespace MonoxProperty
 {
     public class ApplicationDB : DbContext
     {

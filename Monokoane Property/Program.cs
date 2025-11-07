@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using MonoxProperty;
+
 
 namespace Monokoane_Property
 {

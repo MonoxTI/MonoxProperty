@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MonoxProperty.Dtos
 {
-    public class CreateExpenseDto
+    public class ExpenseDto
     {
         public int Id { get; set; }
         public int PropertyId { get; set; }
