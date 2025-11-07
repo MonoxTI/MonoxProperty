@@ -19,6 +19,8 @@ namespace Monokoane_Property
             //Registering the DbContext with PostgreSQL
             builder.Services.AddDbContext<ApplicationDB>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            //Mapping
+            builder.Services.AddAutoMapper(typeof(Program));
 
 
             var app = builder.Build();
