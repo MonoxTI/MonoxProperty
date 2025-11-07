@@ -13,6 +13,10 @@ namespace Monokoane_Property
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            //Registering the DbContext with PostgreSQL
+            builder.Services.AddDbContext<ApplicationDB>(options =>
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
             var app = builder.Build();
 

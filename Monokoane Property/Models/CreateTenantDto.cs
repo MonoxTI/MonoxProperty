@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Property
+namespace MonoxProperty.Dtos
 {
     public class CreateTenantDTO
     {
