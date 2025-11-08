@@ -23,6 +23,7 @@ namespace Monokoane_Property
             builder.Services.AddAutoMapper(typeof(Program));
 
 
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -35,7 +36,6 @@ namespace Monokoane_Property
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

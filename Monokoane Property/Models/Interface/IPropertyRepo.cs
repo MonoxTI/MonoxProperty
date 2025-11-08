@@ -1,3 +1,8 @@
+using MonoxProperty.Entities;
+
+namespace MonoxProperty.Interface
+{
+
 public interface IPropertyRepo
 {
     Task<IEnumerable<Property>> GetAllAsync();
@@ -5,4 +10,5 @@ public interface IPropertyRepo
     Task<Property> AddAsync(Property property);
     Task<Property> UpdateAsync(Property property);
     Task DeleteAsync(int id);
+}
 }
