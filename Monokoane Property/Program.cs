@@ -2,7 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using MonoxProperty;
 
 
-namespace Monokoane_Property
+//namespace Monokoane_Property
+namespace MonoxProperty
 {
     public class Program
     {
@@ -25,6 +26,8 @@ namespace Monokoane_Property
             //Repo and interface
             builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
             builder.Services.AddScoped<IPropertyService, PropertyService>();
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 
 
 
@@ -49,3 +52,14 @@ namespace Monokoane_Property
         }
     }
 }
+
+/*
+dotnet build
+
+-database update
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+
+dotnet run
+
+*/

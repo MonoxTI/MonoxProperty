@@ -1,7 +1,10 @@
 using MonoxProperty.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using MonoxProperty.Entities;
-using MonoxProperty.Interface;
+using MonoxProperty.Interfaces;
+using MonoxProperty.Repository;
+using MonoxProperty.Services;
+using MonoxProperty.Mapping
 using AutoMapper;
 
 
@@ -11,7 +14,7 @@ namespace MonoxProperty.Controllers
 [Route("api/property")]
 public class PropertyController : ControllerBase
 {
-    private readonly IPropertyService service;
+    private readonly IPropertyService services;
 
     public PropertyController(IPropertyService propService)
     {
@@ -21,10 +24,10 @@ public class PropertyController : ControllerBase
     [HttpPost]//adding
     public async Task<IActionResult> AddProperty([FromBody] PropertyDto propertyDto)
     {
-        if (!ModelState.isvalid)
+        if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var created = await services.AddPropertyAsync(propertyDto);
+        var created = await services.AddProperty(propertyDto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
@@ -36,9 +39,9 @@ public class PropertyController : ControllerBase
     }
 
     [HttpGet("{id:int}")]//get by id
-    public async Task<IActionResult> GetPropid(int id)
+    public async Task<IActionResult> GetPropertyById(int id)
     {
-        var property = await services.GetPropertyByIdAsync(id);
+        var property = await services.GetPropertyById(id);
         if(property == null)
         return NotFound(new {message = $"Property with ID:{id} not found"});
 
@@ -47,12 +50,12 @@ public class PropertyController : ControllerBase
 
 
     [HttpPut("{id:int}")]//updating
-     public async Task<IActionResult> Update(int id, [FromBody] PropertyDto dto)
+     public async Task<IActionResult> UpdateProperty (int id, [FromBody] PropertyDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var updated = await services.UpdatePropertyAsync(id, dto);
+            var updated = await services.UpdateProperty(id, dto);
             if (updated == null)
                 return NotFound(new { message = $"Property with ID {id} not found." });
 
@@ -60,9 +63,9 @@ public class PropertyController : ControllerBase
         }
 
           [HttpDelete("{id:int}")]//Delete
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteProperty(int id)
         {
-            var success = await services.DeletePropertyAsync(id);
+            var success = await services.DeleteProperty(id);
             if (!success)
                 return NotFound(new { message = $"Property with ID {id} not found." });
 

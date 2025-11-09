@@ -1,5 +1,6 @@
 using MonoxProperty.Entities;
-using MonoxProperty.Interface;
+using MonoxProperty.Interfaces;
+using MonoxProperty.Repository;
 using Microsoft.EntityFrameworkCore;
 
 namespace MonoxProperty.Repository
@@ -34,7 +35,7 @@ namespace MonoxProperty.Repository
             return property;
         }
 
-        public async Task<Property> UpdateAsync(Property property)
+        public async Task<Property> UpdateAsync(int id, Property property)
         {
             _context.Properties.Update(property);
             await _context.SaveChangesAsync();

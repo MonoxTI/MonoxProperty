@@ -1,6 +1,6 @@
 using MonoxProperty.Entities;
 
-namespace MonoxProperty.Interface
+namespace MonoxProperty.Interfaces
 {
 
 public interface IPropertyRepo
