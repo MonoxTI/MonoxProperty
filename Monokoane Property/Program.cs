@@ -24,6 +24,7 @@ namespace Monokoane_Property
 
             //Repo and interface
             builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
+            builder.Services.AddScoped<IPropertyService, PropertyService>();
 
 
 
