@@ -1,5 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using MonoxProperty;
+using MonoxProperty.Dtos;
+using Microsoft.AspNetCore.Mvc;
+using MonoxProperty.Entities;
+using MonoxProperty.Interfaces;
+using MonoxProperty.Repository;
+using MonoxProperty.Services;
+using MonoxProperty.Mapping;
+using AutoMapper;
 
 
 //namespace Monokoane_Property

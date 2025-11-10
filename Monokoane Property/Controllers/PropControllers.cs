@@ -4,7 +4,7 @@ using MonoxProperty.Entities;
 using MonoxProperty.Interfaces;
 using MonoxProperty.Repository;
 using MonoxProperty.Services;
-using MonoxProperty.Mapping
+using MonoxProperty.Mapping;
 using AutoMapper;
 
 
@@ -28,7 +28,7 @@ public class PropertyController : ControllerBase
             return BadRequest(ModelState);
 
         var created = await services.AddProperty(propertyDto);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+       return CreatedAtAction(nameof(GetPropertyById), new { id = created.Id }, created);
     }
 
     [HttpGet]// GetAll

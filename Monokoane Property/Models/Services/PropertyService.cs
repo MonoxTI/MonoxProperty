@@ -51,7 +51,7 @@ namespace MonoxProperty.Services
                 return null;
 
             _mapper.Map(dto, existing);
-            var updated = await _repo.UpdateAsync(existing);
+            var updated = await _repo.UpdateAsync(id, existing);
             return _mapper.Map<PropertyDto>(updated);
         }
 
