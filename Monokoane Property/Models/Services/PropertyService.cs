@@ -25,10 +25,10 @@ namespace MonoxProperty.Services
             return _mapper.Map<IEnumerable<PropertyDto>>(properties);
         }
 
-        // Get property by ID
-        public async Task<PropertyDto?> GetPropertyById(int id)
+        // Get property by name
+        public async Task<PropertyDto?> GetPropertyByName(string name)
         {
-            var property = await _repo.GetIdAsync(id);
+            var property = await _repo.GetByName(name);
             if (property == null)
                 return null;
 
@@ -42,27 +42,27 @@ namespace MonoxProperty.Services
             var newProperty = await _repo.AddAsync(property);
             return _mapper.Map<PropertyDto>(newProperty);
         }
-
+        
         // Update property
-        public async Task<PropertyDto?> UpdateProperty(int id, PropertyDto dto)
+        public async Task<PropertyDto?> UpdateProperty(string name, PropertyDto dto)
         {
-            var existing = await _repo.GetIdAsync(id);
+            var existing = await _repo.GetByName(name);
             if (existing == null)
                 return null;
 
             _mapper.Map(dto, existing);
-            var updated = await _repo.UpdateAsync(id, existing);
+            var updated = await _repo.UpdateAsync(name, existing);
             return _mapper.Map<PropertyDto>(updated);
         }
 
         // Delete property
-        public async Task<bool> DeleteProperty(int id)
+        public async Task<bool> DeleteProperty(string name)
         {
-            var property = await _repo.GetIdAsync(id);
+            var property = await _repo.GetByName(name);
             if (property == null)
                 return false;
 
-            await _repo.DeleteAsync(id);
+            await _repo.DeleteAsync(name);
             return true;
         }
     }

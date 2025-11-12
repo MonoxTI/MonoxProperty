@@ -5,10 +5,11 @@ namespace MonoxProperty.Interfaces
     public interface IPropertyService
     {
         Task<IEnumerable<PropertyDto>> GetAllProperties();
-        Task<PropertyDto?> GetPropertyById(int id);
+        //Task<PropertyDto?> GetPropertyById(int id);
+        Task<PropertyDto?> GetPropertyByName(string name);
         Task<PropertyDto> AddProperty(PropertyDto dto);
-        Task<PropertyDto?> UpdateProperty(int id, PropertyDto dto);
-        Task<bool> DeleteProperty(int id);
+        Task<PropertyDto?> UpdateProperty(string name, PropertyDto dto);
+        Task<bool> DeleteProperty(string name);
     }
 }
 
