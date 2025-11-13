@@ -21,16 +21,6 @@ public class PropertyController : ControllerBase
         services = propService;
     }
 
-    [HttpPost]//adding
-    public async Task<IActionResult> AddProperty([FromBody] PropertyDto propertyDto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var created = await services.AddProperty(propertyDto);
-       return CreatedAtAction(nameof(GetPropertyByName), new { id = created.Id }, created);
-    }
-
     [HttpGet]// GetAll
     public async Task<IActionResult> GetProperties()
     {
@@ -38,12 +28,12 @@ public class PropertyController : ControllerBase
         return Ok(properties);
     }
 
-    [HttpGet("byname")]//get by name
-    public async Task<IActionResult> GetPropertyByName([FromBody]dynamic data)
+    [HttpPost("byname")]//get by name
+    public async Task<IActionResult> GetPropertyByName([FromBody] PropertyDto data)
     {
         try{
 
-            string name = data?.name;
+            string name = data.PropertyName;
             if(string.IsNullOrEmpty(name))
             {
                 return BadRequest(new { message = "Property name is required." });
@@ -60,26 +50,58 @@ public class PropertyController : ControllerBase
         }
     }
 
-
-    [HttpPut("{id:int}")]//updating
-     public async Task<IActionResult> UpdateProperty (string name, [FromBody] PropertyDto dto)
+     [HttpPost("add")]//adding
+    public async Task<IActionResult> AddProperty([FromBody] PropertyDto data)
+    {
+        try
         {
+            string name = data.PropertyName;
+
+            if (string.IsNullOrEmpty(name) || data == null)
+            {
+                return BadRequest(new { message = "Property name is required." });
+            }
+
+             var addedProp = await services.AddProperty(data);
+
+       return CreatedAtAction(
+        nameof(GetPropertyByName),
+        new { propertyName = addedProp.PropertyName },
+        addedProp
+       );
+
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
+        }
+        
+    }
+
+
+    [HttpPut("update")]//updating
+     public async Task<IActionResult> UpdateProperty ([FromBody] PropertyDto dto)
+        {
+
+            if (dto == null || string.IsNullOrEmpty(dto.PropertyName))
+                return BadRequest(new { message = "Property name is required." });
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var updated = await services.UpdateProperty(name, dto);
+            var updated = await services.UpdateProperty(dto.PropertyName, dto);
             if (updated == null)
-                return NotFound(new { message = $"Property with ID {name} not found." });
+                return NotFound(new { message = $"Property with ID {dto.PropertyName} not found." });
 
-            return Ok(updated);
+            return Ok(new {message = "Property updated successfully."});
         }
 
-          [HttpDelete("{id:int}")]//Delete
-        public async Task<IActionResult> DeleteProperty(string name)
+          [HttpDelete("delete")]//Delete
+        public async Task<IActionResult> DeleteProperty(string PropertyName)
         {
-            var success = await services.DeleteProperty(name);
+            var success = await services.DeleteProperty(PropertyName);
             if (!success)
-                return NotFound(new { message = $"Property with ID {name} not found." });
+                return NotFound(new { message = $"Property with ID {PropertyName} not found." });
 
             return NoContent();
         }

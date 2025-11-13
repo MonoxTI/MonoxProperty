@@ -1,7 +1,6 @@
 using MonoxProperty.Dtos;
 using AutoMapper;
 using MonoxProperty.Entities;
-using MonoxProperty.Dtos;
 
 namespace MonoxProperty.Mapping
 {   

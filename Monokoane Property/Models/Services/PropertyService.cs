@@ -26,12 +26,13 @@ namespace MonoxProperty.Services
         }
 
         // Get property by name
-        public async Task<PropertyDto?> GetPropertyByName(string name)
+        public async Task<PropertyDto?> GetPropertyByName(string PropertyName)
         {
-            var property = await _repo.GetByName(name);
+            var property = await _repo.GetByName(PropertyName);
             if (property == null)
+            {
                 return null;
-
+            }
             return _mapper.Map<PropertyDto>(property);
         }
 
@@ -44,25 +45,25 @@ namespace MonoxProperty.Services
         }
         
         // Update property
-        public async Task<PropertyDto?> UpdateProperty(string name, PropertyDto dto)
+        public async Task<PropertyDto?> UpdateProperty(string PropertyName, PropertyDto dto)
         {
-            var existing = await _repo.GetByName(name);
+            var existing = await _repo.GetByName(PropertyName);
             if (existing == null)
                 return null;
 
             _mapper.Map(dto, existing);
-            var updated = await _repo.UpdateAsync(name, existing);
+            var updated = await _repo.UpdateAsync(PropertyName, existing);
             return _mapper.Map<PropertyDto>(updated);
         }
 
         // Delete property
-        public async Task<bool> DeleteProperty(string name)
+        public async Task<bool> DeleteProperty(string PropertyName)
         {
-            var property = await _repo.GetByName(name);
+            var property = await _repo.GetByName(PropertyName);
             if (property == null)
                 return false;
 
-            await _repo.DeleteAsync(name);
+            await _repo.DeleteAsync(PropertyName);
             return true;
         }
     }

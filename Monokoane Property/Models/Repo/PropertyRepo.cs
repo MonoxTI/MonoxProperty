@@ -21,11 +21,11 @@ namespace MonoxProperty.Repository
                 .ToListAsync();
         }
 
-        public async Task<Property?> GetByName(string name)
+        public async Task<Property?> GetByName(string propertyName)
         {
             return await _context.Properties
                 .Include(p => p.Expenses)
-                .FirstOrDefaultAsync(p => p.PropertyName.ToLower() == name.ToLower());
+                .FirstOrDefaultAsync(p => p.PropertyName.ToLower() == propertyName.ToLower());
         }
         /*
         {
@@ -41,16 +41,17 @@ namespace MonoxProperty.Repository
             return property;
         }
 
-        public async Task<Property> UpdateAsync(string name, Property property)
+        public async Task<Property> UpdateAsync(string PropertyName, Property property)
         {
             _context.Properties.Update(property);
             await _context.SaveChangesAsync();
             return property;
         }
 
-        public async Task DeleteAsync(string name)
+        public async Task DeleteAsync(string PropertyName)
         {
-            var property = await _context.Properties.FindAsync(name);
+            var property = await _context.Properties
+            .FirstOrDefaultAsync(p => p.PropertyName == PropertyName);
             if (property != null)
             {
                 _context.Properties.Remove(property);
