@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{34C90685-178D-48D1-B1E0-52804AAA86D9}|Monokoane Property\\Monokoane Property.csproj|c:\\users\\itumo\\onedrive\\desktop\\github creation\\monoxproperty\\monokoane property\\models\\dtos\\propertydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34C90685-178D-48D1-B1E0-52804AAA86D9}|Monokoane Property\\Monokoane Property.csproj|solutionrelative:monokoane property\\models\\dtos\\propertydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{34C90685-178D-48D1-B1E0-52804AAA86D9}|Monokoane Property\\Monokoane Property.csproj|c:\\users\\itumo\\onedrive\\desktop\\github creation\\monoxproperty\\monokoane property\\controllers\\propcontrollers.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34C90685-178D-48D1-B1E0-52804AAA86D9}|Monokoane Property\\Monokoane Property.csproj|solutionrelative:monokoane property\\controllers\\propcontrollers.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PropertyDto.cs",
+              "DocumentMoniker": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Models\\DTOS\\PropertyDto.cs",
+              "RelativeDocumentMoniker": "Monokoane Property\\Models\\DTOS\\PropertyDto.cs",
+              "ToolTip": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Models\\DTOS\\PropertyDto.cs",
+              "RelativeToolTip": "Monokoane Property\\Models\\DTOS\\PropertyDto.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAgwAYAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-14T17:26:16.847Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "PropControllers.cs",
+              "DocumentMoniker": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Controllers\\PropControllers.cs",
+              "RelativeDocumentMoniker": "Monokoane Property\\Controllers\\PropControllers.cs",
+              "ToolTip": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Controllers\\PropControllers.cs",
+              "RelativeToolTip": "Monokoane Property\\Controllers\\PropControllers.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-14T17:25:44.48Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
