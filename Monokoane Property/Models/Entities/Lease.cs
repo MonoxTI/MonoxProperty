@@ -11,15 +11,17 @@ namespace MonoxProperty.Entities
 
         [ForeignKey ("Property")]
         public int PropertyId { get; set; }
-        public Property Property { get; set; }
+        public Property? Property { get; set; }
 
         [ForeignKey ("Tenant")]
         public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
+        public Tenant? Tenant { get; set; }
 
         public DateTime Start { get; set; }
         public DateTime End { get; set; }
 
-        public decimal RentAmount { get; set; }
+         public decimal Rent {  get; set; }
+        public decimal Levy { get; set; }
+        public decimal Bond { get; set; }
     }
 }
