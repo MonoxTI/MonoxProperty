@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MonoxProperty.Repository
 {
+    // n
     public class PropertyRepo : IPropertyRepo
     {
         private readonly ApplicationDB _context;
@@ -17,7 +18,6 @@ namespace MonoxProperty.Repository
         public async Task<IEnumerable<Property>> GetAllAsync()
         {
             return await _context.Properties
-                .Include(p => p.Expenses)
                 .ToListAsync();
         }
 
@@ -25,15 +25,11 @@ namespace MonoxProperty.Repository
         {
             return await _context.Properties
                 .Include(p => p.Expenses)
+                .Include(p => p.Leases)
+                .thenInclude(l => l.Tenant)
                 .FirstOrDefaultAsync(p => p.PropertyName.ToLower() == propertyName.ToLower());
         }
-        /*
-        {
-            return await _context.Properties
-                .Include(p => p.Expenses)
-                .FirstOrDefaultAsync(p => p.ID == id);
-        }
-        */
+      
         public async Task<Property> AddAsync(Property property)
         {
             _context.Properties.Add(property);
