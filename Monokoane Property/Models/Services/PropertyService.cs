@@ -22,10 +22,11 @@ namespace MonoxProperty.Services
         public async Task<IEnumerable<PropertyDto>> GetAllProperties()
         {
             var properties = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<PropertyDto>>(properties);
+            return _mapper.Map<IEnumerable<PropertyDto>>(properties);//#
         }
 
         // Get property by name
+        //# ?
         public async Task<PropertyDto?> GetPropertyByName(string PropertyName)
         {
             var property = await _repo.GetByName(PropertyName);
@@ -33,7 +34,7 @@ namespace MonoxProperty.Services
             {
                 return null;
             }
-            return _mapper.Map<PropertyDto>(property);
+            return _mapper.Map<PropertyDto>(property);//#
         }
 
         // Add new property
@@ -45,13 +46,15 @@ namespace MonoxProperty.Services
         }
         
         // Update property
+        //# Task<>
         public async Task<PropertyDto?> UpdateProperty(string PropertyName, PropertyDto dto)
         {
             var existing = await _repo.GetByName(PropertyName);
             if (existing == null)
+            {
                 return null;
-
-            _mapper.Map(dto, existing);
+            }
+            _mapper.Map(dto, existing);//#
             var updated = await _repo.UpdateAsync(PropertyName, existing);
             return _mapper.Map<PropertyDto>(updated);
         }

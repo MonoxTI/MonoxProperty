@@ -5,48 +5,48 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MonoxProperty.Repository
 {
-    public class TenantRepo : ITenantRepo
+    public class ExpenseRepo : IExpenseRepo
     {
         private readonly ApplicationDB _context;
 
-        public LeaseRepo(ApplicationDB context)
+        public ExpenseRepo(ApplicationDB context)
         {
             _context = context;
         }
 
-        public async Task<IEnumerable<Tenant>> GetAllAsync()
-         {
-            return await _context.Tenants
+        public async Task<IEnumerable<Expense>> GetAllAsync()
+        {
+            return await _context.Expenses
                 .ToListAsync();
         }
 
-        public async Task<Tenant?> GetIdAsync(int Id)
+        public async Task<Expense?> GetIdAsync(int Id)
         {
-            return await _context.Tenants
+            return await _context.Expenses
             .FirstOrDefaultAsync();
         }
 
-        public async Task<Tenant> AddAsync(Tenant tenant)
+        public async Task<Expense> AddAsync(Expense expense)
         {
-            _context.Tenants.Add(tenant);
+            _context.Expenses.Add(expense);
             await _context.SaveChangesAsync();
-            return tenant;
+            return expense;
         }
 
-        public async Task<Tenant> UpdateAsync(Tenant tenant)
+        public async Task<Expense> UpdateAsync(Expense expense)
         {
-            _context.Tenants.Update(tenant);
+            _context.Expenses.Update(expense);
             await _context.SaveChangesAsync();
-            return tenant;
+            return expense;
         }
 
         public async Task DeleteAsync(int id)
         {
-            var tenant = await _context.Tenants
+            var expense = await _context.Expenses
             .FirstOrDefaultAsync(p => p.id == id);
-            if(tenant != null)
+            if(expense != null)
             {
-                _context.Tenants.Remove(tenant);
+                _context.Expenses.Remove(expense);
                 await _context.SaveChangesAsync();
             }
         }

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MonoxProperty.Repository
 {
-    // n
     public class PropertyRepo : IPropertyRepo
     {
         private readonly ApplicationDB _context;

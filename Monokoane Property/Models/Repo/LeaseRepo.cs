@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MonoxProperty.Repository
 {
-    public class TenantRepo : ITenantRepo
+    public class LeaseRepo : ILeaseRepo
     {
         private readonly ApplicationDB _context;
 
@@ -14,39 +14,39 @@ namespace MonoxProperty.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<Tenant>> GetAllAsync()
-         {
-            return await _context.Tenants
+        public async Task<IEnumerable<Lease>> GetAllAsync()
+        {
+            return await _context.Leases
                 .ToListAsync();
         }
 
-        public async Task<Tenant?> GetIdAsync(int Id)
+        public async Task<Lease?> GetIdAsync(int Id)
         {
-            return await _context.Tenants
+            return await _context.Leases
             .FirstOrDefaultAsync();
         }
 
-        public async Task<Tenant> AddAsync(Tenant tenant)
+        public async Task<Lease> AddAsync(Lease lease)
         {
-            _context.Tenants.Add(tenant);
+            _context.Leases.Add(lease);
             await _context.SaveChangesAsync();
-            return tenant;
+            return lease;
         }
 
-        public async Task<Tenant> UpdateAsync(Tenant tenant)
+        public async Task<Lease> UpdateAsync(Lease lease)
         {
-            _context.Tenants.Update(tenant);
+            _context.Leases.Update(lease);
             await _context.SaveChangesAsync();
-            return tenant;
+            return lease;
         }
 
         public async Task DeleteAsync(int id)
         {
-            var tenant = await _context.Tenants
+            var lease = await _context.Leases
             .FirstOrDefaultAsync(p => p.id == id);
-            if(tenant != null)
+            if(lease != null)
             {
-                _context.Tenants.Remove(tenant);
+                _context.Leases.Remove(lease);
                 await _context.SaveChangesAsync();
             }
         }

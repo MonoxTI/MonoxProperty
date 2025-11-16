@@ -9,7 +9,7 @@ namespace MonoxProperty.Interfaces
         Task<PropertyDto?> GetPropertyByName(string PropertyName);
         Task<PropertyDto> AddProperty(PropertyDto dto);
         Task<PropertyDto?> UpdateProperty(string PropertyName, PropertyDto dto);
-        Task<bool> DeleteProperty(string PropertyName);
+        Task<bool> DeleteProperty(string PropertyName);//#
     }
 }
 
