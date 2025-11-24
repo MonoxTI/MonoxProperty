@@ -14,16 +14,10 @@ namespace MonoxProperty.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<Expense>> GetAllAsync()
+        public async Task<Expense?> GetIdAsync(int id)
         {
             return await _context.Expenses
-                .ToListAsync();
-        }
-
-        public async Task<Expense?> GetIdAsync(int Id)
-        {
-            return await _context.Expenses
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<Expense> AddAsync(Expense expense)
@@ -33,7 +27,7 @@ namespace MonoxProperty.Repository
             return expense;
         }
 
-        public async Task<Expense> UpdateAsync(Expense expense)
+        public async Task<Expense> UpdateAsync(int id, Expense expense)
         {
             _context.Expenses.Update(expense);
             await _context.SaveChangesAsync();
@@ -43,7 +37,7 @@ namespace MonoxProperty.Repository
         public async Task DeleteAsync(int id)
         {
             var expense = await _context.Expenses
-            .FirstOrDefaultAsync(p => p.id == id);
+            .FirstOrDefaultAsync(p => p.Id == id);
             if(expense != null)
             {
                 _context.Expenses.Remove(expense);

@@ -5,10 +5,10 @@ namespace MonoxProperty.Interfaces
     public interface ITenantService
     {
          Task<IEnumerable<TenantDto>> GetAllTenant();
-        Task<TenantDto?> GetTenant(int Id);
+        Task<TenantDto?> GetTenant(int id);
         Task<TenantDto> AddTenant(TenantDto dto);
-        Task<TenantDto?> UpdateTenant(int Id, TenantDto dto);
-        Task<bool> DeleteTenant(int Id);
+        Task<TenantDto?> UpdateTenant(int id, TenantDto dto);
+        Task<bool> DeleteTenant(int id);
     }
 }
 

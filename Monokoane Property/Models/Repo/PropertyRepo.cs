@@ -25,7 +25,7 @@ namespace MonoxProperty.Repository
             return await _context.Properties
                 .Include(p => p.Expenses)
                 .Include(p => p.Leases)
-                .thenInclude(l => l.Tenant)
+                .ThenInclude(l => l.Tenant)
                 .FirstOrDefaultAsync(p => p.PropertyName.ToLower() == propertyName.ToLower());
         }
       

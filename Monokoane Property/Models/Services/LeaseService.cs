@@ -25,9 +25,9 @@ namespace MonoxProperty.Services
             return _mapper.Map<IEnumerable<LeaseDto>>(leases);
         }
 
-        public async Task<LeaseDto?> GetLeasebyId(int id)
+        public async Task<LeaseDto?> GetLeasebyId(int Id)
         {
-            var leases = await _repo.GetIdAsync(id);
+            var leases = await _repo.GetIdAsync(Id);
             if(leases == null)
             {
                 return null;
@@ -42,26 +42,26 @@ namespace MonoxProperty.Services
             return _mapper.Map<LeaseDto>(newlease);
         }
 
-        public async Task<LeaseDto?> UpdateLease(int id, LeaseDto dto)
+        public async Task<LeaseDto?> UpdateLease(int Id, LeaseDto dto)
         {
-            var existing = await _repo.GetIdAsync(id);
+            var existing = await _repo.GetIdAsync(Id);
             if(existing == null)
             {
                 return null;
             }
             _mapper.Map(dto, existing);
-            var update = await _repo.UpdateAsync(id, existing);
+            var update = await _repo.UpdateAsync(Id, existing);
             return _mapper.Map<LeaseDto>(update);
         }
 
-        public async Task<bool> DeleteLease(int id)
+        public async Task<bool> DeleteLease(int Id)
         {
-            var leases = await _repo.GetIdAsync(id);
+            var leases = await _repo.GetIdAsync(Id);
             if(leases == null)
             {
-                return null;
+                return false;
             }
-            await _repo.DeleteAsync(id);
+            await _repo.DeleteAsync(Id);
             return true;
         }
     }

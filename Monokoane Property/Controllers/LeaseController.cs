@@ -13,7 +13,7 @@ namespace MonoxProperty.Controllers
 {   
 [ApiController]
 [Route("api/lease")]
-public class PropertyController : ControllerBase
+public class LeaseController : ControllerBase
 {
 }
 }

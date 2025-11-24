@@ -18,16 +18,9 @@ namespace MonoxProperty.Services
             _mapper = mapper;
         }
 
-        // Get all leases
-        public async Task<IEnumerable<ExpenseDto>> GetAllExpense()
+        public async Task<ExpenseDto?> GetExpensebyId(int Id)
         {
-            var expenses = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<ExpenseDto>>(expenses);
-        }
-
-        public async Task<ExpenseDto?> GetExpensebyId(int id)
-        {
-            var expenses = await _repo.GetIdAsync(id);
+            var expenses = await _repo.GetIdAsync(Id);
             if(expenses == null)
             {
                 return null;
@@ -42,26 +35,26 @@ namespace MonoxProperty.Services
             return _mapper.Map<ExpenseDto>(newexpense);
         }
 
-        public async Task<ExpenseDto?> UpdateExpense(int id, ExpenseDto dto)
+        public async Task<ExpenseDto?> UpdateExpense(int Id, ExpenseDto dto)
         {
-            var expenses = await _repo.GetIdAsync(id);
+            var expenses = await _repo.GetIdAsync(Id);
             if(expenses == null)
             {
                 return null;
             }
             _mapper.Map(dto, expenses);
-            var update = await _repo.UpdateAsync(id, expenses);
+            var update = await _repo.UpdateAsync(Id, expenses);
             return _mapper.Map<ExpenseDto>(update);
         }
 
-        public async Task<bool> DeleteExpense(int id)
+        public async Task<bool> DeleteExpense(int Id)
         {
-            var Expenses = await _repo.GetIdAsync(id);
+            var Expenses = await _repo.GetIdAsync(Id);
             if(Expenses == null)
             {
-                return null;
+                return false;
             }
-            await _repo.DeleteAsync(id);
+            await _repo.DeleteAsync(Id);
             return true;
         }
     }

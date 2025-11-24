@@ -1,13 +1,13 @@
 using MonoxProperty.Entities;
 
-namespace MonoxProperty.Interface
+namespace MonoxProperty.Interfaces
 {
     public interface ILeaseRepo
     {
         Task<IEnumerable<Lease>> GetAllAsync();
         Task<Lease?> GetIdAsync(int Id);
         Task<Lease> AddAsync(Lease lease);
-        Task<Lease> UpdateAsync(Lease lease);
-        Task DeleteAsync(int id);
+        Task<Lease> UpdateAsync(int Id, Lease lease);
+        Task DeleteAsync(int Id);
     }
 }

@@ -12,7 +12,7 @@ namespace MonoxProperty.Services
         private readonly ITenantRepo _repo;
         private readonly IMapper _mapper;
 
-        public PropertyService(ITenantRepo repo, IMapper mapper)
+        public TenantService(ITenantRepo repo, IMapper mapper)
         {
             _repo = repo;
             _mapper = mapper;
@@ -29,7 +29,7 @@ namespace MonoxProperty.Services
         //# ?
         public async Task<TenantDto?> GetTenant(int Id)
         {
-            var tenants = await _repo.GetByName(Id);
+            var tenants = await _repo.GetIdAsync(Id);
             if (tenants == null)
             {
                 return null;

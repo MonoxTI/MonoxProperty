@@ -34,6 +34,12 @@ namespace MonoxProperty
             //Repo and interface
             builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
             builder.Services.AddScoped<IPropertyService, PropertyService>();
+            builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
+            builder.Services.AddScoped<ILeaseService, LeaseService>();
+            builder.Services.AddScoped<ITenantRepo, TenantRepo>();
+            builder.Services.AddScoped<ITenantService, TenantService>();
+            builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
+            builder.Services.AddScoped<IExpenseService, ExpenseService>();
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 

@@ -9,7 +9,7 @@ namespace MonoxProperty.Repository
     {
         private readonly ApplicationDB _context;
 
-        public LeaseRepo(ApplicationDB context)
+        public TenantRepo(ApplicationDB context)
         {
             _context = context;
         }
@@ -20,10 +20,10 @@ namespace MonoxProperty.Repository
                 .ToListAsync();
         }
 
-        public async Task<Tenant?> GetIdAsync(int Id)
+        public async Task<Tenant?> GetIdAsync(int id)
         {
             return await _context.Tenants
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(p => p.ID == id);
         }
 
         public async Task<Tenant> AddAsync(Tenant tenant)
@@ -33,7 +33,7 @@ namespace MonoxProperty.Repository
             return tenant;
         }
 
-        public async Task<Tenant> UpdateAsync(Tenant tenant)
+        public async Task<Tenant> UpdateAsync(int id, Tenant tenant)
         {
             _context.Tenants.Update(tenant);
             await _context.SaveChangesAsync();
@@ -43,7 +43,7 @@ namespace MonoxProperty.Repository
         public async Task DeleteAsync(int id)
         {
             var tenant = await _context.Tenants
-            .FirstOrDefaultAsync(p => p.id == id);
+            .FirstOrDefaultAsync(p => p.Id == id);
             if(tenant != null)
             {
                 _context.Tenants.Remove(tenant);
