@@ -32,8 +32,8 @@ public class LeaseController : ControllerBase
     {
         try
         {
-            string id = data.Id;
-            if(string.IsNullOrEmpty(id))
+            int id = data.Id;
+            if(id <= 0)
             {
                 return BadRequest(new {message = "Lease required."});
             }

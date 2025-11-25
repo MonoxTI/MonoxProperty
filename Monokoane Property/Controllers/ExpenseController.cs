@@ -12,10 +12,10 @@ namespace MonoxProperty.Controllers
 {   
 [ApiController]
 [Route("api/expense")]
-public class LeaseController : ControllerBase
+public class ExpenseController : ControllerBase
 {
     private readonly IExpenseService services;
-    public LeaseController(IExpenseService ExpenseService)
+    public ExpenseController(IExpenseService ExpenseService)
     {
         services = ExpenseService;
     }
@@ -105,4 +105,5 @@ public class LeaseController : ControllerBase
             return StatusCode(500, new { message = "An error while processing your request.", details = ex.Message});
         }
     }
+}
 }

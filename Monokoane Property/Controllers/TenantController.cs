@@ -11,11 +11,11 @@ using AutoMapper;
 namespace MonoxProperty.Controllers
 {   
 [ApiController]
-[Route("api/lease")]
+[Route("api/tenant")]
 public class TenantController : ControllerBase
 {
     private readonly ITenantService services;
-    public LeaseController(ITenantService TenantService)
+    public TenantController(ITenantService TenantService)
     {
         services = TenantService;
     }
@@ -53,7 +53,7 @@ public class TenantController : ControllerBase
     {
         try
         {
-            string tenant = data.id;
+            string tenant = data.Id;
             if(string.IsNullOrEmpty(tenant) || data == null)
             {
                 return BadRequest(new { message = "Tenant name is required" });

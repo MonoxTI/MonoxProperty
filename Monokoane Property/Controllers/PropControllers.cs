@@ -32,7 +32,6 @@ public class PropertyController : ControllerBase
     public async Task<IActionResult> GetPropertyByName([FromBody] PropertyDto data)
     {
         try{
-
             string name = data.PropertyName;
             if(string.IsNullOrEmpty(name))
             {
@@ -75,7 +74,6 @@ public class PropertyController : ControllerBase
         {
             return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
         }
-        
     }
 
 
