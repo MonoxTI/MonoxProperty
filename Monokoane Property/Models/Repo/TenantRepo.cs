@@ -23,7 +23,7 @@ namespace MonoxProperty.Repository
         public async Task<Tenant?> GetIdAsync(int id)
         {
             return await _context.Tenants
-            .FirstOrDefaultAsync(p => p.ID == id);
+            .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<Tenant> AddAsync(Tenant tenant)
@@ -35,9 +35,18 @@ namespace MonoxProperty.Repository
 
         public async Task<Tenant> UpdateAsync(int id, Tenant tenant)
         {
-            _context.Tenants.Update(tenant);
+            if(id != tenant.Id)
+            {
+                return null;
+            }
+            var existingTenant = await _context.Tenants.FindAsync(id);
+            if(existingTenant == null)
+            {
+                return null;
+            }
+            
             await _context.SaveChangesAsync();
-            return tenant;
+            return existingTenant;
         }
 
         public async Task DeleteAsync(int id)
@@ -48,6 +57,7 @@ namespace MonoxProperty.Repository
             {
                 _context.Tenants.Remove(tenant);
                 await _context.SaveChangesAsync();
+                return true;
             }
         }
     }

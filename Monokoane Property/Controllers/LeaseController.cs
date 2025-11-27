@@ -24,7 +24,7 @@ public class LeaseController : ControllerBase
     public async Task<IActionResult> GetLeases()
     {
         var leases = await services.GetAllLeases();
-        return ok(leases);
+        return Ok(leases);
     }
 
     [HttpPost("byID")]
@@ -33,15 +33,15 @@ public class LeaseController : ControllerBase
         try
         {
             int id = data.Id;
-            if(id <= 0)
+            if(id <= 0 || data == null)
             {
-                return BadRequest(new {message = "Lease required."});
+                return BadRequest(new {message = "Lease ID required."});
             }
             var lease = await services.GetLeasebyId(id);
             if(lease == null)
-            return NotFound(new {message= $"{lease} not found "});
+            return NotFound(new {message= $"lease with id {id} not found "});
 
-            return ok(lease);
+            return Ok(lease);
         }
         catch(Exception ex)
         {
@@ -50,22 +50,22 @@ public class LeaseController : ControllerBase
     }
 
     [HttpPost ("add")]
-    public aync Task<IActionResult> AddLease([FromBody] LeaseDto data)
+    public async Task<IActionResult> AddLease([FromBody] LeaseDto data)
     {
         try
         {
-            string lease = data.Id;
-            if(string.IsNullOrEmpty(lease) || data == null)
+            if(data == null)
             {
-                return BadRequest(new { message = "Leaseid is required" });
+                return BadRequest(new { message = "Lease data is required."});
             }
 
-            var addedlease = await services.addedlease(data);
+            var addedlease = await services.AddLease(data);
 
-            return CreatedAtAction(nameof(GetLeasebyId),
-            new {lease = addedlease.Id},
-            addedlease
-            );
+            return CreatedAtAction(
+                nameof(GetLeasebyId),
+                new {Id = addedlease.Id},
+                addedlease
+                );
         }
         catch(Exception ex)
         {
@@ -74,9 +74,9 @@ public class LeaseController : ControllerBase
     }
 
     [HttpPut("update")]
-    public aysnc Tasl<IActionResult> UpdateLease ([FromBody] LeaseDto dto)
+    public async Task<IActionResult> UpdateLease ([FromBody] LeaseDto dto)
     {
-        if(dto == null || string.IsNullOrEmpty(dto.Id))
+        if(dto == null || dto.Id <= 0)
         return BadRequest(new { message = "Lease id is required." });
 
         if(!ModelState.IsValid)
@@ -95,16 +95,15 @@ public class LeaseController : ControllerBase
     {
         try
         {
-            string id = dto.Id;
-            if(string.IsNullOrEmpty(id))
+            if(dto == null || dto.Id <= 0)
             {
-                return BadRequest(new { message = "Lease id is required." });
+                return BadRequest(new { message = "Lease ID is required." });
             }
 
-            var deleted = await services.DeleteLease(id);
+            var deleted = await services.DeleteLease(dto.Id);
             if(!deleted)
             {
-                return NotFound(new { message = $"Lease with id {id} not found." });
+                return NotFound(new { message = $"Lease with id {dto.Id} not found." });
             }
 
             return Ok(new { message = "Lease deleted successfully." });

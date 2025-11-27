@@ -7,7 +7,7 @@ namespace MonoxProperty.Entities
     public class Tenant
     {
         [Key]
-        public int ID { get; set; }
+        public int Id { get; set; }
 
         [Required]
         public string FullName { get; set; } = string.Empty;

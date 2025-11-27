@@ -68,12 +68,15 @@ namespace MonoxProperty
 }
 
 /*
-dotnet build
+
 
 -database update
 dotnet ef migrations add InitialCreate
 dotnet ef database update
 
+-To run the application
+dotnet clean
+dotnet build
 dotnet run
 
 */

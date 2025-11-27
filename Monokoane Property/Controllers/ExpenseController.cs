@@ -20,21 +20,21 @@ public class ExpenseController : ControllerBase
         services = ExpenseService;
     }
 
-    [HttpGet]
-    public aync Task<IActionResult> GetExpensebyId ([FromBody] ExpenseDto data )
+    [HttpGet("getbyid")]
+    public async Task<IActionResult> GetExpensebyId ( ExpenseDto data )
     {
         try
         {
             int id = data.Id;
-            if(id <= 0)
+            if(id <= 0 || data == null)
             {
                 return BadRequest(new {message = "Expense ID required."});
             }
             var expense = await services.GetExpensebyId(id);
             if(expense == null)
-            return NotFound(new {message= $"{expense} not found "});
+            return NotFound(new {message= $"Expense with ID {id} not found "});
 
-            return ok(expense);
+            return Ok(expense);
         }
         catch(Exception ex)
         {
@@ -46,8 +46,8 @@ public class ExpenseController : ControllerBase
     {
         try
         {
-            int expenseId = data.Id;
-            if(propertyId <= 0 || data == null)
+            int id = data.Id;
+            if( id <= 0 || data == null)
             {
                 return BadRequest(new { message = "Valid PropertyId is required" });
             }

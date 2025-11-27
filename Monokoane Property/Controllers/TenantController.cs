@@ -23,7 +23,7 @@ public class TenantController : ControllerBase
     public async Task<IActionResult> GetTenants()
     {
         var tenants = await services.GetAllTenant();
-        return ok(tenants);
+        return Ok(tenants);
     }
 
     [HttpPost("byID")]
@@ -40,7 +40,7 @@ public class TenantController : ControllerBase
             if(tenant == null)
             return NotFound(new {message= $"{tenant} not found "});
 
-            return ok(tenant);
+            return Ok(tenant);
         }
         catch(Exception ex)
         {
@@ -53,15 +53,15 @@ public class TenantController : ControllerBase
     {
         try
         {
-            string tenant = data.Id;
-            if(string.IsNullOrEmpty(tenant) || data == null)
+            var tenant = data.Id;
+            if( tenant <=0 || data == null)
             {
                 return BadRequest(new { message = "Tenant name is required" });
             }
             var newTenant = await services.AddTenant(data);
             return CreatedAtAction(nameof(GetTenant),
-            new {tenant= addedTenant.Id},
-            addedTenant
+            new {tenant= newTenant.Id},
+            newTenant
             );
         }
         catch(Exception ex)
@@ -71,20 +71,20 @@ public class TenantController : ControllerBase
     }
 
     [HttpPut("update")]
-    public async Task<IActionResult> UpdateTenant([FromBody] TenantDto data)
+    public async Task<IActionResult> UpdateTenant(int id,  [FromBody] TenantDto data)
     {
         try
         {
-            int id = data.Id;
-            if(id <= 0 || data == null)
+             
+            if(data.Id <= 0 || data == null)
             {
                 return BadRequest(new { message = "Valid Tenant ID is required" });
             }
 
-            var updatedTenant = await services.UpdateTenant(id, data);
+            var updatedTenant = await services.UpdateTenant(data.Id, data);
             if(updatedTenant == null)
             {
-                return NotFound(new { message = $"Tenant with ID {id} not found." });
+                return NotFound(new { message = $"Tenant with ID {data.Id} not found." });
             }
 
             return Ok(updatedTenant);

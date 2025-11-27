@@ -47,26 +47,26 @@ namespace MonoxProperty.Services
         
         // Update property
         //# Task<>
-        public async Task<TenantDto?> UpdateTenant(int Id, TenantDto dto)
+        public async Task<TenantDto?> UpdateTenant(int id, TenantDto dto)
         {
-            var tenants = await _repo.GetByName(Id);
+            var tenants = await _repo.GetIdAsync(id);
             if (tenants == null)
             {
                 return null;
             }
             _mapper.Map(dto, tenants);//#
-            var updated = await _repo.UpdateAsync(Id, tenants);
+            var updated = await _repo.UpdateAsync(id, tenants);
             return _mapper.Map<TenantDto>(updated);
         }
 
         // Delete property
-        public async Task<bool> DeleteTenant(int Id)
+        public async Task<bool> DeleteTenant(int id)
         {
-            var tenants = await _repo.GetByName(Id);
+            var tenants = await _repo.GetIdAsync(id);
             if (tenants == null)
                 return false;
 
-            await _repo.DeleteAsync(Id);
+            await _repo.DeleteAsync(id);
             return true;
         }
     }

@@ -7,7 +7,7 @@ namespace MonoxProperty.Entities
     public class Lease
     {
         [Key]
-        public int ID { get; set; }
+        public int Id { get; set; }
 
         [ForeignKey ("Property")]
         public int PropertyId { get; set; }
