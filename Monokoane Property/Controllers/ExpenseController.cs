@@ -20,56 +20,47 @@ public class ExpenseController : ControllerBase
         services = ExpenseService;
     }
 
-    [HttpGet("getbyid")]
-    public async Task<IActionResult> GetExpensebyId ( ExpenseDto data )
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<ExpenseDto>> GetExpensebyId ( int id)
     {
-        try
-        {
-            int id = data.Id;
-            if(id <= 0 || data == null)
+            if(id <= 0 )
             {
-                return BadRequest(new {message = "Expense ID required."});
+                return BadRequest("Expense ID required.");
             }
             var expense = await services.GetExpensebyId(id);
             if(expense == null)
             return NotFound(new {message= $"Expense with ID {id} not found "});
 
             return Ok(expense);
-        }
-        catch(Exception ex)
-        {
-            return StatusCode(500, new { message = "An error while processing your request.", details = ex.Message});
-        }
     }
-    [HttpPost ("add")]
-    public async Task<IActionResult> AddExpense([FromBody] ExpenseDto data)
+    [HttpPost]
+    public async Task<ActionResult<ExpenseDto>> AddExpense([FromBody] ExpenseDto data)
     {
-        try
-        {
-            int id = data.Id;
-            if( id <= 0 || data == null)
+            if( data == null)
             {
                 return BadRequest(new { message = "Valid PropertyId is required" });
             }
+            if(data.Amount <= 0)
+            {
+                return BadRequest(new { message = "Amount must be greater than zero." });
+            }
+
             var expense = await services.AddExpense(data);
             return CreatedAtAction(nameof(GetExpensebyId), 
             new { id = expense.Id }, 
             expense);
-        }
-        catch(Exception ex)
-        {
-            return StatusCode(500, new { message = "An error while processing your request.", details = ex.Message});
-        }
     }
-    [HttpPut("update")]
-    public async Task<IActionResult> UpdateExpense([FromBody] ExpenseDto data)
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<ExpenseDto>> UpdateExpense(int id, [FromBody] ExpenseDto data)
     {
-        try
-        {
-            int id = data.Id;
             if(id <= 0 || data == null)
             {
                 return BadRequest(new { message = "Valid Expense ID is required" });
+            }
+            if(data.Id != id)
+            {
+                return BadRequest("Expense ID mismatch between URL and body." );
             }
             var updatedExpense = await services.UpdateExpense(id, data);
             if(updatedExpense == null)
@@ -77,18 +68,11 @@ public class ExpenseController : ControllerBase
                 return NotFound(new { message = $"Expense with ID {id} not found." });
             }
             return Ok(updatedExpense);
-        }
-        catch(Exception ex)
-        {
-            return StatusCode(500, new { message = "An error while processing your request.", details = ex.Message});
-        }
     }
-    [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteExpense([FromBody] ExpenseDto data)
+    
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> DeleteExpense(int id)
     {
-        try
-        {
-            int id = data.Id;
             if(id <= 0)
             {
                 return BadRequest(new { message = "Valid Expense ID is required" });
@@ -99,11 +83,6 @@ public class ExpenseController : ControllerBase
                 return NotFound(new { message = $"Expense with ID {id} not found." });
             }
             return Ok(new { message = "Expense deleted successfully." });
-        }
-        catch(Exception ex)
-        {
-            return StatusCode(500, new { message = "An error while processing your request.", details = ex.Message});
-        }
     }
 }
 }

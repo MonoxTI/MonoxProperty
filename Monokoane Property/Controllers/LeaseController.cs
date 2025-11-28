@@ -21,97 +21,79 @@ public class LeaseController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetLeases()
+    public async Task<ActionResult<IEnumerable<LeaseDto>>> GetLeases()
     {
         var leases = await services.GetAllLeases();
         return Ok(leases);
     }
 
-    [HttpPost("byID")]
-    public async Task<IActionResult> GetLeasebyId([FromBody] LeaseDto data )
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<LeaseDto>> GetLeasebyId(int id)
     {
-        try
-        {
-            int id = data.Id;
-            if(id <= 0 || data == null)
+            if(id <= 0)
             {
-                return BadRequest(new {message = "Lease ID required."});
+                return BadRequest("Lease ID required.");
             }
             var lease = await services.GetLeasebyId(id);
             if(lease == null)
-            return NotFound(new {message= $"lease with id {id} not found "});
+            return NotFound($"lease with id {id} not found ");
 
             return Ok(lease);
-        }
-        catch(Exception ex)
-        {
-            return StatusCode(500, new { message = "An error while processing your request.", details = ex.Message});
-        }
     }
 
-    [HttpPost ("add")]
-    public async Task<IActionResult> AddLease([FromBody] LeaseDto data)
+    [HttpPost]
+    public async Task<ActionResult<LeaseDto>> AddLease([FromBody] LeaseDto data)
     {
-        try
-        {
             if(data == null)
             {
-                return BadRequest(new { message = "Lease data is required."});
+                return BadRequest("Lease data is required.");
             }
 
             var addedlease = await services.AddLease(data);
 
             return CreatedAtAction(
                 nameof(GetLeasebyId),
-                new {Id = addedlease.Id},
+                new {id = addedlease.Id},
                 addedlease
                 );
-        }
-        catch(Exception ex)
-        {
-            return StatusCode(500, new{ message = "An error occurred while processing your request.", details = ex.Message });
-        }
     }
+    
 
-    [HttpPut("update")]
-    public async Task<IActionResult> UpdateLease ([FromBody] LeaseDto dto)
+    [HttpPut("int{id}")]
+    public async Task<ActionResult<LeaseDto>> UpdateLease (int id, [FromBody] LeaseDto dto)
     {
-        if(dto == null || dto.Id <= 0)
+        if(dto == null || id <= 0)
         return BadRequest(new { message = "Lease id is required." });
 
-        if(!ModelState.IsValid)
-        return BadRequest(ModelState);
+        if(dto.Id != id)
+        {
+            return BadRequest("Lease ID mismatch between URL and body." );
+        }
 
-        var updatedLease = await services.UpdateLease(dto.Id, dto);
+        var updatedLease = await services.UpdateLease(id, dto);
         if(updatedLease == null)
-        return NotFound(new { message = $"Lease with id {dto.Id} not found." });
+        return NotFound($"Lease with id {id} not found." );
 
-        return Ok(new { message = "Lease updated successfully.", lease = updatedLease });
+        return Ok(updatedLease);
     }
 
 
-    [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteLease ([FromBody] LeaseDto dto)
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> DeleteLease (int id)
     {
-        try
-        {
-            if(dto == null || dto.Id <= 0)
+            if(id <= 0)
             {
-                return BadRequest(new { message = "Lease ID is required." });
+                return BadRequest("Lease ID is required." );
             }
 
-            var deleted = await services.DeleteLease(dto.Id);
+            var deleted = await services.DeleteLease(id);
             if(!deleted)
             {
-                return NotFound(new { message = $"Lease with id {dto.Id} not found." });
+                return NotFound("Lease with id {id} not found." );
             }
 
             return Ok(new { message = "Lease deleted successfully." });
         }
-        catch(Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
-        }
     }
 }
-}
+

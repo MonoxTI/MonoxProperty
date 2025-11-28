@@ -35,16 +35,16 @@ namespace MonoxProperty.Repository
 
         public async Task<Tenant> UpdateAsync(int id, Tenant tenant)
         {
-            if(id != tenant.Id)
+            if(id != tenant.Id) 
             {
                 return null;
             }
             var existingTenant = await _context.Tenants.FindAsync(id);
-            if(existingTenant == null)
+            if(existingTenant == null) 
             {
                 return null;
             }
-            
+
             await _context.SaveChangesAsync();
             return existingTenant;
         }
@@ -57,7 +57,6 @@ namespace MonoxProperty.Repository
             {
                 _context.Tenants.Remove(tenant);
                 await _context.SaveChangesAsync();
-                return true;
             }
         }
     }

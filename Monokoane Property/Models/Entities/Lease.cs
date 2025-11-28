@@ -15,7 +15,7 @@ namespace MonoxProperty.Entities
 
         [ForeignKey ("Tenant")]
         public int TenantId { get; set; }
-        public Tenant? Tenant { get; set; }
+        public Tenant Tenant { get; set; } = null!;
 
         public DateTime Start { get; set; }
         public DateTime End { get; set; }

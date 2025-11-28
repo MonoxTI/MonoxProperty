@@ -22,7 +22,7 @@ namespace MonoxProperty.Entities
         public decimal Bond { get; set; }
         */
         public bool Occupied { get; set; }
-        public ICollection<Lease>? Leases { get; set;}
+        public ICollection<Lease>? Leases { get; set;} = new List<Lease>();
         public ICollection<Expense>? Expenses { get; set;}
     }
 }

@@ -19,27 +19,28 @@ public class TenantController : ControllerBase
     {
         services = TenantService;
     }
+
     [HttpGet]
-    public async Task<IActionResult> GetTenants()
+    public async Task<ActionResult> GetTenants()
     {
         var tenants = await services.GetAllTenant();
         return Ok(tenants);
     }
 
-    [HttpPost("byID")]
-    public async Task<IActionResult> GetTenant([FromBody] TenantDto data )
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult> GetTenant(int id)
     {
         try
         {
-            int id = data.Id;
-            if(id <= 0)
+            if(id<= 0)
             {
-                return BadRequest(new {message = "Tenant ID required."});
+                return BadRequest( "Tenant ID required.");
             }
             var tenant = await services.GetTenant(id);
             if(tenant == null)
-            return NotFound(new {message= $"{tenant} not found "});
-
+            {
+                return NotFound($"Tenat with ID {id} not found ");
+            }
             return Ok(tenant);
         }
         catch(Exception ex)
@@ -49,18 +50,18 @@ public class TenantController : ControllerBase
     }
 
     [HttpPost ("add")]
-    public async Task<IActionResult> AddTenant([FromBody] TenantDto data)
+    public async Task<ActionResult<TenantDto>> AddTenant([FromBody] TenantDto data)
     {
         try
         {
             var tenant = data.Id;
-            if( tenant <=0 || data == null)
+            if( string.IsNullOrEmpty(data.FullName))
             {
                 return BadRequest(new { message = "Tenant name is required" });
             }
             var newTenant = await services.AddTenant(data);
             return CreatedAtAction(nameof(GetTenant),
-            new {tenant= newTenant.Id},
+            new {id = newTenant.Id},
             newTenant
             );
         }
@@ -70,23 +71,25 @@ public class TenantController : ControllerBase
         }
     }
 
-    [HttpPut("update")]
-    public async Task<IActionResult> UpdateTenant(int id,  [FromBody] TenantDto data)
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult> UpdateTenant(int id, [FromBody] TenantDto data)
     {
         try
-        {
-             
-            if(data.Id <= 0 || data == null)
+        {    
+            if(id <= 0 || data == null)
             {
-                return BadRequest(new { message = "Valid Tenant ID is required" });
+                return BadRequest("Valid Tenant ID is required");
             }
 
-            var updatedTenant = await services.UpdateTenant(data.Id, data);
+            if(data.Id != id)
+            {
+                return BadRequest("Tenant ID mismatch between URL and body.");
+            }
+            var updatedTenant = await services.UpdateTenant(id, data);
             if(updatedTenant == null)
             {
-                return NotFound(new { message = $"Tenant with ID {data.Id} not found." });
+                return NotFound($"Tenant with ID {id} not found." );
             }
-
             return Ok(updatedTenant);
         }
         catch(Exception ex)
@@ -95,15 +98,14 @@ public class TenantController : ControllerBase
         }
     }
 
-    [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteTenant([FromBody] TenantDto data)
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> DeleteTenant(int id)
     {
         try
         {
-            int id = data.Id;
             if(id <= 0)
             {
-                return BadRequest(new { message = "Valid Tenant ID is required" });
+                return BadRequest("Valid Tenant ID is required");
             }
 
             var isDeleted = await services.DeleteTenant(id);

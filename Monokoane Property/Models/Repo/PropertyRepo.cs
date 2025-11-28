@@ -36,17 +36,23 @@ namespace MonoxProperty.Repository
             return property;
         }
 
-        public async Task<Property> UpdateAsync(string PropertyName, Property property)
+        public async Task<Property?> UpdateAsync(string PropertyName, Property property)
         {
+            var existing = await _context.Properties
+                .FirstOrDefaultAsync(p => p.PropertyName.ToLower() == PropertyName.ToLower());
+                if(existing == null)
+                {
+                    return null;
+                }
             _context.Properties.Update(property);
             await _context.SaveChangesAsync();
-            return property;
+            return existing;
         }
 
         public async Task DeleteAsync(string PropertyName)
         {
             var property = await _context.Properties
-            .FirstOrDefaultAsync(p => p.PropertyName == PropertyName);
+            .FirstOrDefaultAsync(p => p.PropertyName != null && p.PropertyName.ToLower() == PropertyName.ToLower());
             if (property != null)
             {
                 _context.Properties.Remove(property);

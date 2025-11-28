@@ -90,11 +90,11 @@ namespace Monokoane_Property.Migrations
 
             modelBuilder.Entity("MonoxProperty.Entities.Property", b =>
                 {
-                    b.Property<int>("ID")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ID"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Apartments")
                         .HasColumnType("boolean");
@@ -113,7 +113,7 @@ namespace Monokoane_Property.Migrations
                     b.Property<int>("Units")
                         .HasColumnType("integer");
 
-                    b.HasKey("ID");
+                    b.HasKey("Id");
 
                     b.ToTable("Properties");
                 });
