@@ -41,7 +41,7 @@ public class LeaseController : ControllerBase
             return Ok(lease);
     }
 
-    [HttpPost]
+    [HttpPost("add")]
     public async Task<ActionResult<LeaseDto>> AddLease([FromBody] LeaseDto data)
     {
             if(data == null)
