@@ -7,6 +7,14 @@ using MonoxProperty.Mapping;
 
 namespace MonoxProperty.Services
 {
+     public class DuplicateleaseException : Exception
+    {
+        public DuplicateleaseException(int Id) 
+        : base($"Tenant with ID '{Id}' already exists.")
+        {
+
+        }
+    }
     public class LeaseService : ILeaseService
     {
         private readonly ILeaseRepo _repo;
@@ -37,6 +45,15 @@ namespace MonoxProperty.Services
 
         public async Task<LeaseDto> AddLease (LeaseDto dto)
         {
+            if(dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto));
+            }
+            var existing = await _repo.GetIdAsync(dto.Id);
+            if(existing != null)
+            {
+                throw new DuplicateleaseException(dto.Id);
+            }
             var leases = _mapper.Map<Lease>(dto);
             var newlease = await _repo.AddAsync(leases);
             return _mapper.Map<LeaseDto>(newlease);

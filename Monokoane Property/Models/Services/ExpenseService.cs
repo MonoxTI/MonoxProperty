@@ -7,6 +7,14 @@ using MonoxProperty.Mapping;
 
 namespace MonoxProperty.Services
 {
+     public class DuplicateExpenseException : Exception
+    {
+        public DuplicateExpenseException(int Id) 
+        : base($"Tenant with ID '{Id}' already exists.")
+        {
+
+        }
+    }
     public class ExpenseService : IExpenseService
     {
         private readonly IExpenseRepo _repo;
@@ -30,6 +38,15 @@ namespace MonoxProperty.Services
 
         public async Task<ExpenseDto> AddExpense (ExpenseDto dto)
         {
+            if(dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto));
+            }
+            var existing = await _repo.GetIdAsync(dto.Id);
+            if(existing != null)
+            {
+                throw new DuplicateExpenseException(dto.Id);
+            }
             var expenses = _mapper.Map<Expense>(dto);
             var newexpense = await _repo.AddAsync(expenses);
             return _mapper.Map<ExpenseDto>(newexpense);

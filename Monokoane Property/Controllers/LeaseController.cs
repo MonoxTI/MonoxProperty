@@ -44,6 +44,8 @@ public class LeaseController : ControllerBase
     [HttpPost("add")]
     public async Task<ActionResult<LeaseDto>> AddLease([FromBody] LeaseDto data)
     {
+        try
+        {
             if(data == null)
             {
                 return BadRequest("Lease data is required.");
@@ -56,6 +58,13 @@ public class LeaseController : ControllerBase
                 new {id = addedlease.Id},
                 addedlease
                 );
+        }catch(DuplicateleaseException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }catch(ArgumentException ex)
+        {
+            return BadRequest(new {message = ex.Message });
+        }
     }
     
 

@@ -49,25 +49,20 @@ public class TenantController : ControllerBase
         }
     }
 
-    [HttpPost ("add")]
+    [HttpPost]
     public async Task<ActionResult<TenantDto>> AddTenant([FromBody] TenantDto data)
     {
         try
         {
-            var tenant = data.Id;
-            if( string.IsNullOrEmpty(data.FullName))
-            {
-                return BadRequest(new { message = "Tenant name is required" });
-            }
             var newTenant = await services.AddTenant(data);
             return CreatedAtAction(nameof(GetTenant),
             new {id = newTenant.Id},
             newTenant
             );
         }
-        catch(Exception ex)
+        catch(DuplicatetenantException ex)
         {
-            return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
+            return BadRequest(new { message = ex.Message });
         }
     }
 

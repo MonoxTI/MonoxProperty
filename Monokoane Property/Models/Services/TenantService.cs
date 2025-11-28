@@ -7,6 +7,14 @@ using MonoxProperty.Mapping;
 
 namespace MonoxProperty.Services
 {
+    public class DuplicatetenantException : Exception
+    {
+        public DuplicatetenantException(int Id) 
+        : base($"Tenant with ID '{Id}' already exists.")
+        {
+
+        }
+    }
     public class TenantService : ITenantService
     {
         private readonly ITenantRepo _repo;
@@ -40,6 +48,15 @@ namespace MonoxProperty.Services
         // Add new property
         public async Task<TenantDto> AddTenant(TenantDto dto)
         {
+            if(dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto));
+            }
+            var existing = await _repo.GetIdAsync(dto.Id);
+            if(existing != null)
+            {
+                throw new DuplicatetenantException(dto.Id);
+            }
             var tenants = _mapper.Map<Tenant>(dto);
             var newTenant = await _repo.AddAsync(tenants);
             return _mapper.Map<TenantDto>(newTenant);

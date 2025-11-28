@@ -4,9 +4,19 @@ using MonoxProperty.Dtos;
 using MonoxProperty.Interfaces;
 using MonoxProperty.Repository;
 using MonoxProperty.Mapping;
+using MonoxProperty.Exceptions;
 
 namespace MonoxProperty.Services
 {
+
+    public class DuplicatePropertyNameException : Exception
+    {
+        public DuplicatePropertyNameException(string PropertyName) 
+        : base($"Propertyy with name '{PropertyName}' already exists.")
+        {
+
+        }
+    }
     public class PropertyService : IPropertyService
     {
         private readonly IPropertyRepo _repo;
@@ -22,7 +32,7 @@ namespace MonoxProperty.Services
         public async Task<IEnumerable<PropertyDto>> GetAllProperties()
         {
             var properties = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<PropertyDto>>(properties);//#
+            return _mapper.Map<IEnumerable<PropertyDto>>(properties);
         }
 
         // Get property by name
@@ -40,6 +50,17 @@ namespace MonoxProperty.Services
         // Add new property
         public async Task<PropertyDto> AddProperty(PropertyDto dto)
         {
+            if(dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto));
+            }
+            
+            var existing = await _repo.GetByName(dto.PropertyName);
+            if(existing != null)
+            {
+                throw new DuplicatePropertyNameException(dto.PropertyName);
+            }
+
             var property = _mapper.Map<Property>(dto);
             var newProperty = await _repo.AddAsync(property);
             return _mapper.Map<PropertyDto>(newProperty);

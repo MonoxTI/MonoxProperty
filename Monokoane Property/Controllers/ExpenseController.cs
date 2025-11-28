@@ -36,6 +36,8 @@ public class ExpenseController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ExpenseDto>> AddExpense([FromBody] ExpenseDto data)
     {
+        try
+        {
             if( data == null)
             {
                 return BadRequest(new { message = "Valid PropertyId is required" });
@@ -49,6 +51,13 @@ public class ExpenseController : ControllerBase
             return CreatedAtAction(nameof(GetExpensebyId), 
             new { id = expense.Id }, 
             expense);
+        }catch(DuplicateExpenseException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }catch(ArgumentException ex)
+        {
+            return BadRequest(new {message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]

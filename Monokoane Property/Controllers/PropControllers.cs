@@ -7,7 +7,6 @@ using MonoxProperty.Services;
 using MonoxProperty.Mapping;
 using AutoMapper;
 
-
 namespace MonoxProperty.Controllers
 {   
 [ApiController]
@@ -54,25 +53,19 @@ public class PropertyController : ControllerBase
     {
         try
         {
-            string name = data.PropertyName;
-
-            if (string.IsNullOrEmpty(name) || data == null)
-            {
-                return BadRequest(new { message = "Property name is required." });
-            }
-
              var addedProp = await services.AddProperty(data);
-
-       return CreatedAtAction(
-        nameof(GetPropertyByName),
-        new { propertyName = addedProp.PropertyName },
-        addedProp
-       );
+             return CreatedAtAction(nameof(GetPropertyByName),
+             new { propertyName = addedProp.PropertyName },
+             addedProp);
 
         }
-        catch (Exception ex)
+        catch ( DuplicatePropertyNameException ex)
         {
-            return StatusCode(500, new { message = "An error occurred while processing your request.", details = ex.Message });
+            return StatusCode(500, new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message});
         }
     }
 
