@@ -20,6 +20,12 @@ namespace MonoxProperty.Repository
             .FirstOrDefaultAsync(p => p.Id == id);
         }
 
+        public async Task<Expense?> Getby(int PropertyId)
+        {
+            return await _context.Expenses
+            .FirstOrDefaultAsync(p => p.PropertyId == PropertyId);
+        }
+
         public async Task<Expense> AddAsync(Expense expense)
         {
             _context.Expenses.Add(expense);

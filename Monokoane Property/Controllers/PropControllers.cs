@@ -5,6 +5,7 @@ using MonoxProperty.Interfaces;
 using MonoxProperty.Repository;
 using MonoxProperty.Services;
 using MonoxProperty.Mapping;
+using MonoxProperty.Exceptions;
 using AutoMapper;
 
 namespace MonoxProperty.Controllers
@@ -48,26 +49,33 @@ public class PropertyController : ControllerBase
         }
     }
 
-     [HttpPost("add")]//adding
-    public async Task<IActionResult> AddProperty([FromBody] PropertyDto data)
+     [HttpPost]
+public async Task<ActionResult<PropertyDto>> AddProperty([FromBody] PropertyDto data)
+{
+    try
     {
-        try
-        {
-             var addedProp = await services.AddProperty(data);
-             return CreatedAtAction(nameof(GetPropertyByName),
-             new { propertyName = addedProp.PropertyName },
-             addedProp);
-
-        }
-        catch ( DuplicatePropertyNameException ex)
-        {
-            return StatusCode(500, new { message = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message});
-        }
+        var addedProp = await services.AddProperty(data);
+        return CreatedAtAction(
+            nameof(GetPropertyByName),
+            new { propertyName = addedProp.PropertyName },
+            addedProp
+        );
     }
+    catch (DuplicateEntityException ex)
+    {
+        // ✅ 400 Bad Request for validation errors
+        return BadRequest(new { message = ex.Message });
+    }
+    catch (ArgumentException ex)
+    {
+        return BadRequest(new { message = ex.Message });
+    }
+    // Optional: catch unexpected errors
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { message = "An unexpected error occurred." });
+    }
+}
 
 
     [HttpPut("update")]//updating

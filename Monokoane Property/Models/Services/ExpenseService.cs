@@ -4,17 +4,10 @@ using MonoxProperty.Dtos;
 using MonoxProperty.Interfaces;
 using MonoxProperty.Repository;
 using MonoxProperty.Mapping;
+using MonoxProperty.Exceptions;
 
 namespace MonoxProperty.Services
 {
-     public class DuplicateExpenseException : Exception
-    {
-        public DuplicateExpenseException(int Id) 
-        : base($"Tenant with ID '{Id}' already exists.")
-        {
-
-        }
-    }
     public class ExpenseService : IExpenseService
     {
         private readonly IExpenseRepo _repo;
@@ -38,14 +31,15 @@ namespace MonoxProperty.Services
 
         public async Task<ExpenseDto> AddExpense (ExpenseDto dto)
         {
+
             if(dto == null)
             {
                 throw new ArgumentNullException(nameof(dto));
             }
-            var existing = await _repo.GetIdAsync(dto.Id);
+            var existing = await _repo.Getby(dto.PropertyId);
             if(existing != null)
             {
-                throw new DuplicateExpenseException(dto.Id);
+                throw new DuplicateEntityException("Expense",dto.PropertyId.ToString());
             }
             var expenses = _mapper.Map<Expense>(dto);
             var newexpense = await _repo.AddAsync(expenses);

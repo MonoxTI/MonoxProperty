@@ -20,6 +20,12 @@ namespace MonoxProperty.Repository
                 .ToListAsync();
         }
 
+        public async Task<Tenant?> GetbyEmail(string Email)
+        {
+            return await _context.Tenants
+            .FirstOrDefaultAsync(p => p.Email == Email);
+        }
+
         public async Task<Tenant?> GetIdAsync(int id)
         {
             return await _context.Tenants

@@ -5,6 +5,7 @@ using MonoxProperty.Interfaces;
 using MonoxProperty.Repository;
 using MonoxProperty.Services;
 using MonoxProperty.Mapping;
+using MonoxProperty.Exceptions;
 using AutoMapper;
 
 
@@ -58,7 +59,7 @@ public class LeaseController : ControllerBase
                 new {id = addedlease.Id},
                 addedlease
                 );
-        }catch(DuplicateleaseException ex)
+        }catch(DuplicateEntityException ex)
         {
             return BadRequest(new { message = ex.Message });
         }catch(ArgumentException ex)

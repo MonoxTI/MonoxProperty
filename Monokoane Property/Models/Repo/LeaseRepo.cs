@@ -25,6 +25,11 @@ namespace MonoxProperty.Repository
             return await _context.Leases
             .FirstOrDefaultAsync(p => p.Id == id);
         }
+        public async Task<Lease?> Getby(int propertyId)
+        {
+            return await _context.Leases
+            .FirstOrDefaultAsync(p => p.PropertyId == propertyId);
+        }
 
         public async Task<Lease> AddAsync(Lease lease)
         {

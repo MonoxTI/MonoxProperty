@@ -5,6 +5,7 @@ using MonoxProperty.Interfaces;
 using MonoxProperty.Repository;
 using MonoxProperty.Services;
 using MonoxProperty.Mapping;
+using MonoxProperty.Exceptions;
 using AutoMapper;
 
 
@@ -51,7 +52,7 @@ public class ExpenseController : ControllerBase
             return CreatedAtAction(nameof(GetExpensebyId), 
             new { id = expense.Id }, 
             expense);
-        }catch(DuplicateExpenseException ex)
+        }catch(DuplicateEntityException ex)
         {
             return BadRequest(new { message = ex.Message });
         }catch(ArgumentException ex)

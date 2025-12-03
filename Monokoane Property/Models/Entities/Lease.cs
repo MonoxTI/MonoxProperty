@@ -9,19 +9,21 @@ namespace MonoxProperty.Entities
         [Key]
         public int Id { get; set; }
 
-        [ForeignKey ("Property")]
         public int PropertyId { get; set; }
         public Property? Property { get; set; }
 
-        [ForeignKey ("Tenant")]
         public int TenantId { get; set; }
-        public Tenant Tenant { get; set; } = null!;
+        public Tenant? Tenant { get; set; } = null!;
 
+        [Required]
         public DateTime Start { get; set; }
+        [Required]
         public DateTime End { get; set; }
-
-         public decimal Rent {  get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal Rent {  get; set; }
+        [Range(0, double.MaxValue)]
         public decimal Levy { get; set; }
+        [Range(0, double.MaxValue)]
         public decimal Bond { get; set; }
     }
 }

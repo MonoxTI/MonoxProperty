@@ -8,15 +8,6 @@ using MonoxProperty.Exceptions;
 
 namespace MonoxProperty.Services
 {
-
-    public class DuplicatePropertyNameException : Exception
-    {
-        public DuplicatePropertyNameException(string PropertyName) 
-        : base($"Propertyy with name '{PropertyName}' already exists.")
-        {
-
-        }
-    }
     public class PropertyService : IPropertyService
     {
         private readonly IPropertyRepo _repo;
@@ -49,21 +40,22 @@ namespace MonoxProperty.Services
 
         // Add new property
         public async Task<PropertyDto> AddProperty(PropertyDto dto)
-        {
-            if(dto == null)
-            {
-                throw new ArgumentNullException(nameof(dto));
-            }
-            
-            var existing = await _repo.GetByName(dto.PropertyName);
-            if(existing != null)
-            {
-                throw new DuplicatePropertyNameException(dto.PropertyName);
-            }
-
-            var property = _mapper.Map<Property>(dto);
-            var newProperty = await _repo.AddAsync(property);
-            return _mapper.Map<PropertyDto>(newProperty);
+       {
+        if (dto == null)
+        throw new ArgumentNullException(nameof(dto));
+        
+        var propertyName = dto.PropertyName?.Trim();
+        if (string.IsNullOrWhiteSpace(propertyName))
+        throw new ArgumentException("Property name is required.", nameof(dto.PropertyName));
+        
+        var existing = await _repo.GetByName(propertyName);
+        if (existing != null)
+        throw new DuplicateEntityException(propertyName);
+        
+        var property = _mapper.Map<Property>(dto);
+        property.PropertyName = propertyName; // Ensure normalized name is saved
+        var newProperty = await _repo.AddAsync(property);
+        return _mapper.Map<PropertyDto>(newProperty);
         }
         
         // Update property
