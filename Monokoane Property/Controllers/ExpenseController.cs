@@ -11,6 +11,7 @@ using AutoMapper;
 
 namespace MonoxProperty.Controllers
 {   
+[Authorize]
 [ApiController]
 [Route("api/expense")]
 public class ExpenseController : ControllerBase

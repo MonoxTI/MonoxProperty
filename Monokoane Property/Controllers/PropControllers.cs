@@ -9,7 +9,8 @@ using MonoxProperty.Exceptions;
 using AutoMapper;
 
 namespace MonoxProperty.Controllers
-{   
+{
+[Authorize]   
 [ApiController]
 [Route("api/property")]
 public class PropertyController : ControllerBase

@@ -8,6 +8,9 @@ using MonoxProperty.Repository;
 using MonoxProperty.Services;
 using MonoxProperty.Mapping;
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 //namespace Monokoane_Property
@@ -34,19 +37,42 @@ namespace MonoxProperty
             //Repo and interface
             builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
             builder.Services.AddScoped<IPropertyService, PropertyService>();
+
             builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
             builder.Services.AddScoped<ILeaseService, LeaseService>();
+
             builder.Services.AddScoped<ITenantRepo, TenantRepo>();
             builder.Services.AddScoped<ITenantService, TenantService>();
+
             builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
             builder.Services.AddScoped<IExpenseService, ExpenseService>();
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
+            // JWT config
+            var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };        
+            });
+            // Add repos/services
+            builder.Services.AddScoped<IUserRepo, UserRepo>();
+            builder.Services.AddScoped<JwtService>();
 
 
             var app = builder.Build();
-
        
            
             // Configure the HTTP request pipeline.
@@ -56,11 +82,13 @@ namespace MonoxProperty
                 app.UseSwaggerUI();
             }
 
-            //app.UseHttpsRedirection();
-
+            app.UseRouting();
+            app.UseHttpsRedirection();
+            app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.Run();
         }

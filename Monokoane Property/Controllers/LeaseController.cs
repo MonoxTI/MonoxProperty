@@ -10,7 +10,8 @@ using AutoMapper;
 
 
 namespace MonoxProperty.Controllers
-{   
+{
+[Authorize]
 [ApiController]
 [Route("api/lease")]
 public class LeaseController : ControllerBase
