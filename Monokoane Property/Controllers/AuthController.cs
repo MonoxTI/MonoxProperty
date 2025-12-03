@@ -3,8 +3,7 @@ using MonoxProperty.Interfaces;
 using MonoxProperty.Services;
 using MonoxProperty.Dtos;
 using MonoxProperty.Entities;
-using System.Security.Cryptography;
-using Microsoft.AspNetCore.Authorization;
+using BCrypt.Net; // Make sure to import
 
 namespace MonoxProperty.Controllers
 {
@@ -24,31 +23,44 @@ namespace MonoxProperty.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
         {
-            var existing = await _repo.GetByUsername(dto.Username);
-            if (existing != null) return BadRequest("User already exists");
+            // Validate model (optional but good)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            // Check if email already exists
+            var existingUser = await _repo.GetByEmailAsync(dto.Email);
+            if (existingUser != null)
+                return BadRequest("Email is already registered.");
 
+            // Hash password
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
+            // Create user (using Email and FullName from DTO)
             var user = new User
             {
-                Username = dto.Username,
-                PasswordHash = hashed
+                FullName = dto.FullName,
+                Email = dto.Email.Trim().ToLower(),
+                PasswordHash = hashedPassword
             };
 
-            await _repo.Create(user);
+            await _repo.CreateAsync(user);
 
-            return Ok("User registered");
+            return Ok("User registered successfully.");
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var user = await _repo.GetByUsername(dto.Username);
-            if (user == null) return Unauthorized("Invalid credentials");
+            // Find user by email
+            var user = await _repo.GetByEmailAsync(dto.Email);
+            if (user == null)
+                return Unauthorized("Invalid email or password.");
 
+            // Verify password
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Invalid credentials");
+                return Unauthorized("Invalid email or password.");
 
+            // Generate JWT
             var token = _jwt.GenerateToken(user);
 
             return Ok(new { token });

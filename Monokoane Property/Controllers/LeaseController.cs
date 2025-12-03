@@ -7,6 +7,7 @@ using MonoxProperty.Services;
 using MonoxProperty.Mapping;
 using MonoxProperty.Exceptions;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace MonoxProperty.Controllers

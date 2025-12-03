@@ -17,5 +17,7 @@ namespace MonoxProperty.Entities
 
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
+          public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
     }
 }

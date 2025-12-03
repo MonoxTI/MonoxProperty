@@ -1,26 +1,27 @@
 using MonoxProperty.Entities;
 using MonoxProperty.Interfaces;
-using MonoxProperty.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace MonoxProperty.Repositories
+namespace MonoxProperty.Repository
 {
     public class UserRepo : IUserRepo
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDB _context;
 
-        public UserRepo(AppDbContext context)
+        public UserRepo(ApplicationDB context)
         {
             _context = context;
         }
 
-        public async Task<User?> GetByUsername(string username)
+        public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
-        public async Task<User> Create(User user)
+        public async Task<User> CreateAsync(User user)
         {
+            // Assume password is already hashed by the service layer
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return user;
