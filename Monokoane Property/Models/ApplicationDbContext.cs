@@ -34,6 +34,23 @@ namespace MonoxProperty
         .WithOne(l => l.Tenant)
         .HasForeignKey(l => l.TenantId)
         .OnDelete(DeleteBehavior.Cascade);
-        }
+        
+        // User relationships
+    modelBuilder.Entity<User>()
+        .HasIndex(u => u.Email)
+        .IsUnique();
+
+    modelBuilder.Entity<RefreshToken>()
+        .HasOne(rt => rt.User)
+        .WithMany(u => u.RefreshTokens)
+        .HasForeignKey(rt => rt.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Payment>()
+        .HasOne(p => p.Lease)
+        .WithMany()
+        .HasForeignKey(p => p.LeaseId)
+        .OnDelete(DeleteBehavior.Restrict);
+    }
     }
 }

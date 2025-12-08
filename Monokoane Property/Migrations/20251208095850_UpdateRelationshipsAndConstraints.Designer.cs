@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MonoxProperty;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Monokoane_Property.Migrations
 {
     [DbContext(typeof(ApplicationDB))]
-    partial class ApplicationDBModelSnapshot : ModelSnapshot
+    [Migration("20251208095850_UpdateRelationshipsAndConstraints")]
+    partial class UpdateRelationshipsAndConstraints
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,33 +89,6 @@ namespace Monokoane_Property.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Leases");
-                });
-
-            modelBuilder.Entity("MonoxProperty.Entities.Payment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("LeaseId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LeaseId");
-
-                    b.ToTable("Payment");
                 });
 
             modelBuilder.Entity("MonoxProperty.Entities.Property", b =>
@@ -273,17 +249,6 @@ namespace Monokoane_Property.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("MonoxProperty.Entities.Payment", b =>
-                {
-                    b.HasOne("MonoxProperty.Entities.Lease", "Lease")
-                        .WithMany()
-                        .HasForeignKey("LeaseId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Lease");
                 });
 
             modelBuilder.Entity("MonoxProperty.Entities.RefreshToken", b =>

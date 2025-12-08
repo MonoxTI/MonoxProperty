@@ -48,6 +48,7 @@ builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<PaymentRepo>();
 
 // Other repos/services (keep your existing ones)
 
@@ -106,4 +107,6 @@ dotnet clean
 dotnet build
 dotnet run
 
+
+If you're mapping to DTOs using AutoMapper, make sure the DTO also includes a list for Expenses:
 */
