@@ -7,7 +7,7 @@ namespace MonoxProperty.Entities
         public DateTime Expires { get; set; }
         public bool IsExpired => DateTime.UtcNow >= Expires;
 
-        public DateTime Created { get; set; }
+        public DateTime Created { get; set; } = DateTime.UtcNow;
         public string CreatedByIp { get; set; } = string.Empty;
 
         public DateTime? Revoked { get; set; }

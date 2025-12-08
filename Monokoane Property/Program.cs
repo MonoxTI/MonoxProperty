@@ -10,7 +10,9 @@ using MonoxProperty.Mapping;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MonoxProperty.Middleware;
 using System.Text;
+// using Microsoft.OpenApi.Models; (removed - not needed)
 
 
 //namespace Monokoane_Property
@@ -20,77 +22,74 @@ namespace MonoxProperty
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+           // ... other usings ...
 
-            // Add services to the container.
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+var builder = WebApplication.CreateBuilder(args);
 
-            //Registering the DbContext with PostgreSQL
-            builder.Services.AddDbContext<ApplicationDB>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-            //Mapping
-            builder.Services.AddAutoMapper(typeof(Program));
+// === Services ===
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 
-            //Repo and interface
-            builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
-            builder.Services.AddScoped<IPropertyService, PropertyService>();
+// DbContext
+builder.Services.AddDbContext<ApplicationDB>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
-            builder.Services.AddScoped<ILeaseService, LeaseService>();
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-            builder.Services.AddScoped<ITenantRepo, TenantRepo>();
-            builder.Services.AddScoped<ITenantService, TenantService>();
+// Repos & Services
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IPropertyService, PropertyService>();
+builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
+builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<ITenantRepo, TenantRepo>();
+builder.Services.AddScoped<ILeaseService, LeaseService>();
+builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
+builder.Services.AddScoped<JwtService>();
 
-            builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
-            builder.Services.AddScoped<IExpenseService, ExpenseService>();
-            builder.Services.AddAutoMapper(typeof(MappingProfile));
+// Other repos/services (keep your existing ones)
 
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+// Swagger
+builder.Services.AddSwaggerGen();
 
-            // JWT config
-            var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
-                };        
-            });
-            // Add repos/services
-            builder.Services.AddScoped<IUserRepo, UserRepo>();
-            builder.Services.AddScoped<JwtService>();
+// JWT Auth
+var jwtKey = builder.Configuration["Jwt:Key"] 
+    ?? throw new InvalidOperationException("Jwt:Key is missing.");
+var key = Encoding.UTF8.GetBytes(jwtKey);
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+    });
 
-            var app = builder.Build();
-       
-           
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+var app = builder.Build();
 
-            app.UseRouting();
-            app.UseHttpsRedirection();
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.MapControllers();
-            app.UseSwagger();
-            app.UseSwaggerUI();
+// === Pipeline ===
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-            app.Run();
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
         }
     }
 }

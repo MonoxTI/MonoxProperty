@@ -46,7 +46,11 @@ namespace MonoxProperty.Services
             {
                 throw new ArgumentNullException(nameof(dto));
             }
-            var existing = await _repo.GetbyEmail(dto.Email);
+            if(string.IsNullOrEmpty(dto.Email))
+            {
+                throw new ArgumentException("Email is required.", nameof(dto.Email));
+            }
+            var existing = await _repo.GetbyEmail(tenant);
             if(existing != null)
             {
                 throw new DuplicateEntityException("tenant",tenant);

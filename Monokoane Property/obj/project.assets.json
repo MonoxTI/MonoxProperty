@@ -1723,7 +1723,7 @@
           "lib/netstandard1.0/_._": {}
         }
       },
-      "Microsoft.OpenApi/2.3.0": {
+      "Microsoft.OpenApi/3.0.1": {
         "type": "package",
         "dependencies": {
           "System.Text.Json": "8.0.5"
@@ -4890,10 +4890,10 @@
         "version.txt"
       ]
     },
-    "Microsoft.OpenApi/2.3.0": {
-      "sha512": "5RZpjyt0JMmoc/aEgY9c1vE5pusdDGvkPl9qKIy9KFbRiIXD+w7gBJxX+unSjzzOcfgRoYxnO4okZyqDAL2WEw==",
+    "Microsoft.OpenApi/3.0.1": {
+      "sha512": "bEUxdaMrfX/1T/U0I9GOxi3nmZTlMZd+/rOPWVKnfIMlzV28VPXmLg7OiQvFa1ivOEruLSdZCUSc4KgroZZHpg==",
       "type": "package",
-      "path": "microsoft.openapi/2.3.0",
+      "path": "microsoft.openapi/3.0.1",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -4904,7 +4904,7 @@
         "lib/netstandard2.0/Microsoft.OpenApi.dll",
         "lib/netstandard2.0/Microsoft.OpenApi.pdb",
         "lib/netstandard2.0/Microsoft.OpenApi.xml",
-        "microsoft.openapi.2.3.0.nupkg.sha512",
+        "microsoft.openapi.3.0.1.nupkg.sha512",
         "microsoft.openapi.nuspec"
       ]
     },
@@ -5898,6 +5898,7 @@
       "Microsoft.AspNetCore.Mvc >= 2.3.0",
       "Microsoft.EntityFrameworkCore >= 9.0.10",
       "Microsoft.EntityFrameworkCore.Design >= 9.0.10",
+      "Microsoft.OpenApi >= 3.0.1",
       "Npgsql.EntityFrameworkCore.PostgreSQL >= 9.0.4",
       "Swashbuckle.AspNetCore >= 10.0.1",
       "System.IdentityModel.Tokens.Jwt >= 8.15.0"
@@ -5978,6 +5979,10 @@
             "suppressParent": "All",
             "target": "Package",
             "version": "[9.0.10, )"
+          },
+          "Microsoft.OpenApi": {
+            "target": "Package",
+            "version": "[3.0.1, )"
           },
           "Npgsql.EntityFrameworkCore.PostgreSQL": {
             "target": "Package",

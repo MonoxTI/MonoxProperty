@@ -28,5 +28,13 @@ public class AuthService
 
         return await _userRepo.CreateAsync(user);
     }
+    public async Task<User> LoginAsync(LoginDto dto)
+    {
+        var user = await _userRepo.GetByEmailAsync(dto.Email.Trim().ToLower());
+        if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            throw new UnauthorizedAccessException("Invalid email or password.");
+
+        return user;
+    }
 }
 }
