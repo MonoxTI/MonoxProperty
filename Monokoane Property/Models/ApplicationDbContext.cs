@@ -17,41 +17,23 @@ namespace MonoxProperty
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // 🔗 Expense → Property (many-to-one)
-            modelBuilder.Entity<Expense>(entity =>
-            {
-                entity.HasOne(e => e.Property)
-                      .WithMany(p => p.Expenses)
-                      .HasForeignKey(e => e.PropertyId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // 🔗 Lease → Property (many-to-one)
-            modelBuilder.Entity<Lease>(entity =>
-            {
-                entity.HasOne(l => l.Property)
-                      .WithMany(p => p.Leases)
-                      .HasForeignKey(l => l.PropertyId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // 🔗 Lease → Tenant (many-to-one)
-            modelBuilder.Entity<Lease>(entity =>
-            {
-                entity.HasOne(l => l.Tenant)
-                      .WithMany(t => t.Leases)
-                      .HasForeignKey(l => l.TenantId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // 🔗 Optional: Enforce uniqueness
-            modelBuilder.Entity<Tenant>()
-                .HasIndex(t => t.Email)
-                .IsUnique();
-
             modelBuilder.Entity<Property>()
-                .HasIndex(p => p.PropertyName)
-                .IsUnique();
+        .HasMany(p => p.Leases)
+        .WithOne(l => l.Property)
+        .HasForeignKey(l => l.PropertyId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    modelBuilder.Entity<Property>()
+        .HasMany(p => p.Expenses)
+        .WithOne(e => e.Property)
+        .HasForeignKey(e => e.PropertyId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    modelBuilder.Entity<Tenant>()
+        .HasMany(t => t.Leases)
+        .WithOne(l => l.Tenant)
+        .HasForeignKey(l => l.TenantId)
+        .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
