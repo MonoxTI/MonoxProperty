@@ -11,38 +11,33 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace MonoxProperty.Controllers
 {
-
-[ApiController]
-[Route("api/payment")]
-[Authorize]
-public class PaymentController : ControllerBase
-{
-    private readonly PaymentService _paymentService;
-
-    public PaymentController(PaymentService paymentService)
+    [ApiController]
+    [Route("api/payments")]
+    [Authorize]
+    public class PaymentController : ControllerBase
     {
-        _paymentService = paymentService;
-    }
+        private readonly IPaymentService _paymentService;
 
-    [HttpPost("record")]
-    public async Task<IActionResult> RecordPayment([FromBody] RecordPaymentDto dto)
-    {
-        await _paymentService.RecordPaymentAsync(dto.LeaseId, dto.Type, dto.Amount);
-        return Ok("Payment recorded");
-    }
+        public PaymentController(IPaymentService paymentService)
+        {
+            _paymentService = paymentService;
+        }
 
-    [HttpGet("summary/{month}")]
-    public async Task<IActionResult> GetSummary(int year, int month)
-    {
-        var summary = await _paymentService.GetMonthlySummaryAsync(year, month);
-        return Ok(summary);
+        [HttpPost("record")]
+        public async Task<IActionResult> RecordPayment([FromBody] RecordPaymentDto dto)
+        {
+            await _paymentService.RecordPaymentAsync(dto.LeaseId, dto.Type, dto.Amount);
+            return Ok(new { message = "Payment recorded successfully" });
+        }
+
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetSummary(
+            [FromQuery] int year,
+            [FromQuery] int month)
+        {
+            var summary = await _paymentService.GetMonthlySummaryAsync(year, month);
+            return Ok(summary);
+        }
     }
 }
 
-public class RecordPaymentDto
-{
-    public int LeaseId { get; set; }
-    public PaymentType Type { get; set; }
-    public decimal Amount { get; set; }
-}
-}

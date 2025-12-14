@@ -48,7 +48,7 @@ builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
 builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<PaymentRepo>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // Other repos/services (keep your existing ones)
 

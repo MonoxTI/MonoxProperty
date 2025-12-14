@@ -10,7 +10,8 @@ public class SummaryDto
     public decimal TotalRent { get; set; }
     public decimal TotalLevy { get; set; }
     public decimal TotalBond { get; set; }
-    public decimal TotalIncome => TotalRent + TotalLevy;
-    public decimal Profit { get; set; }
+    public decimal TotalExpenses { get; set; }
+    public decimal TotalIncome => TotalRent;
+    public decimal Profit => TotalIncome - (TotalBond + TotalLevy + TotalExpenses);
 }
 }

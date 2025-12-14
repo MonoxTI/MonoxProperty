@@ -32,7 +32,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpPost("byname")]//get by name
-    public async Task<IActionResult> GetPropertyByName([FromBody] PropertyDto data)
+    public async Task<IActionResult> GetPropertyByName([FromBody] OnePropertyDto data)
     {
         try{
             string name = data.PropertyName;
