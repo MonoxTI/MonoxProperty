@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace MonoxProperty.Controllers
 {
     [ApiController]
-    [Route("api/payments")]
+    [Route("api/pay")]
     [Authorize]
     public class PaymentController : ControllerBase
     {

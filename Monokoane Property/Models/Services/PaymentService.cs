@@ -23,7 +23,6 @@ namespace MonoxProperty.Services
                 Amount = amount,
                 PaymentDate = DateTime.UtcNow
             };
-
             _db.Payments.Add(payment);
             await _db.SaveChangesAsync();
         }
@@ -32,7 +31,6 @@ namespace MonoxProperty.Services
         {
             var startDate = new DateTime(year, month, 1);
             var endDate = startDate.AddMonths(1);
-
             var rentTotal = await _db.Payments
                 .Where(p => p.Type == PaymentType.Rent &&
                             p.PaymentDate >= startDate &&
@@ -52,8 +50,8 @@ namespace MonoxProperty.Services
                 .SumAsync(p => p.Amount);
 
             var ExpenseTotal = await _db.Expenses
-                .Where(e => e.ExpenseDate >= startDate &&
-                            e.ExpenseDate < endDate)
+                .Where(e => e.DateIncurred >= startDate &&
+                            e.DateIncurred < endDate)
                 .SumAsync(e => e.Amount);
 
             return new SummaryDto
