@@ -1,112 +1,118 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using MonoxProperty;
-using MonoxProperty.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using MonoxProperty.Entities;
 using MonoxProperty.Interfaces;
 using MonoxProperty.Repository;
 using MonoxProperty.Services;
 using MonoxProperty.Mapping;
-using AutoMapper;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using MonoxProperty.Middleware;
-using System.Text;
-// using Microsoft.OpenApi.Models; (removed - not needed)
 
-
-//namespace Monokoane_Property
 namespace MonoxProperty
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-           // ... other usings ...
+            var builder = WebApplication.CreateBuilder(args);
 
-var builder = WebApplication.CreateBuilder(args);
+            // =========================
+            // SERVICES (REGISTER FIRST)
+            // =========================
 
-// === Services ===
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
-// DbContext
-builder.Services.AddDbContext<ApplicationDB>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            // DbContext
+            builder.Services.AddDbContext<ApplicationDB>(options =>
+                options.UseNpgsql(
+                    builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+            // AutoMapper
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// Repos & Services
-builder.Services.AddScoped<IUserRepo, UserRepo>();
-builder.Services.AddScoped<IPropertyService, PropertyService>();
-builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
-builder.Services.AddScoped<ITenantService, TenantService>();
-builder.Services.AddScoped<ITenantRepo, TenantRepo>();
-builder.Services.AddScoped<ILeaseService, LeaseService>();
-builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
-builder.Services.AddScoped<IExpenseService, ExpenseService>();
-builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
-builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
+            // Repositories & Services
+            builder.Services.AddScoped<IUserRepo, UserRepo>();
+            builder.Services.AddScoped<IPropertyRepo, PropertyRepo>();
+            builder.Services.AddScoped<IPropertyService, PropertyService>();
+            builder.Services.AddScoped<ITenantRepo, TenantRepo>();
+            builder.Services.AddScoped<ITenantService, TenantService>();
+            builder.Services.AddScoped<ILeaseRepo, LeaseRepo>();
+            builder.Services.AddScoped<ILeaseService, LeaseService>();
+            builder.Services.AddScoped<IExpenseRepo, ExpenseRepo>();
+            builder.Services.AddScoped<IExpenseService, ExpenseService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<JwtService>();
 
-// Other repos/services (keep your existing ones)
+            // JWT Authentication
+            var jwtKey = builder.Configuration["Jwt:Key"]
+                ?? throw new InvalidOperationException("Jwt:Key is missing.");
 
-// Swagger
-builder.Services.AddSwaggerGen();
+            var key = Encoding.UTF8.GetBytes(jwtKey);
 
-// JWT Auth
-var jwtKey = builder.Configuration["Jwt:Key"] 
-    ?? throw new InvalidOperationException("Jwt:Key is missing.");
-var key = Encoding.UTF8.GetBytes(jwtKey);
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(key)
+                    };
+                });
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key)
-        };
-    });
+            // =========================
+            // BUILD THE APP (LOCKS DI)
+            // =========================
+            var app = builder.Build();
 
-var app = builder.Build();
+            // =========================
+            // DATABASE MIGRATION
+            // =========================
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDB>();
 
-// === Pipeline ===
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+                try
+                {
+                    Console.WriteLine("Applying migrations...");
+                    dbContext.Database.Migrate();
 
-app.UseHttpsRedirection();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+                    Console.WriteLine("Testing database connection...");
+                    dbContext.Database.CanConnect();
+                    Console.WriteLine("Database connected successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Database error: {ex.Message}");
+                    throw;
+                }
+            }
 
-app.Run();
+            // =========================
+            // MIDDLEWARE PIPELINE
+            // =========================
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseJwtLogging();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.MapControllers();
+
+            app.Run();
         }
     }
 }
-
-/*
-
-
--database update
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-
--To run the application
-dotnet clean
-dotnet build
-dotnet run
-
-
-If you're mapping to DTOs using AutoMapper, make sure the DTO also includes a list for Expenses:
-*/

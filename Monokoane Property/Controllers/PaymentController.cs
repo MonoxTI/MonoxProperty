@@ -17,27 +17,36 @@ namespace MonoxProperty.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
-
         public PaymentController(IPaymentService paymentService)
         {
             _paymentService = paymentService;
         }
 
-        [HttpPost("record")]
-        public async Task<IActionResult> RecordPayment([FromBody] RecordPaymentDto dto)
-        {
-            await _paymentService.RecordPaymentAsync(dto.LeaseId, dto.Type, dto.Amount);
-            return Ok(new { message = "Payment recorded successfully" });
-        }
+    [HttpPost("record")]
+    public async Task<IActionResult> RecordPayment([FromBody] RecordPaymentDto dto)
+    {
+        await _paymentService.RecordPaymentAsync(dto.LeaseId, dto.Type, dto.Amount);
+        return Ok(new { message = "Payment recorded successfully" });
+    }
 
-        [HttpGet("summary")]
-        public async Task<IActionResult> GetSummary(
-            [FromQuery] int year,
-            [FromQuery] int month)
-        {
-            var summary = await _paymentService.GetMonthlySummaryAsync(year, month);
-            return Ok(summary);
-        }
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetSummary([FromQuery] int year, [FromQuery] int month)
+    {
+        var summary = await _paymentService.GetMonthlySummaryAsync(year, month);
+        return Ok(summary);
+    }
+
+    [HttpPost("property-report")]
+    public async Task<IActionResult> GetPropertyReport([FromBody] PropertyReportDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request?.PropertyName))
+            return BadRequest("Property name is required.");
+
+        var report = await _paymentService.GetMonthlySummary(request.PropertyName);
+        if (report == null)
+            return NotFound($"Property '{request.PropertyName}' not found.");
+
+        return Ok(report);
     }
 }
-
+}

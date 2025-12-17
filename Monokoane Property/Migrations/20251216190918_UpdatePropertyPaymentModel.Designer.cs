@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MonoxProperty;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Monokoane_Property.Migrations
 {
     [DbContext(typeof(ApplicationDB))]
-    partial class ApplicationDBModelSnapshot : ModelSnapshot
+    [Migration("20251216190918_UpdatePropertyPaymentModel")]
+    partial class UpdatePropertyPaymentModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -102,9 +105,6 @@ namespace Monokoane_Property.Migrations
                     b.Property<int>("LeaseId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("LeaseId1")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -114,8 +114,6 @@ namespace Monokoane_Property.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LeaseId");
-
-                    b.HasIndex("LeaseId1");
 
                     b.ToTable("Payments");
                 });
@@ -288,10 +286,6 @@ namespace Monokoane_Property.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MonoxProperty.Entities.Lease", null)
-                        .WithMany("Payments")
-                        .HasForeignKey("LeaseId1");
-
                     b.Navigation("Lease");
                 });
 
@@ -304,11 +298,6 @@ namespace Monokoane_Property.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("MonoxProperty.Entities.Lease", b =>
-                {
-                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("MonoxProperty.Entities.Property", b =>
