@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-
 namespace MonoxProperty.Dtos
 {
     public class ExpenseDto

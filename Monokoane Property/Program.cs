@@ -25,7 +25,6 @@ namespace MonoxProperty
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
             // DbContext
             builder.Services.AddDbContext<ApplicationDB>(options =>
                 options.UseNpgsql(
@@ -46,6 +45,8 @@ namespace MonoxProperty
             builder.Services.AddScoped<IExpenseService, ExpenseService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<JwtService>();
+            builder.Services.AddScoped<ExcelExportService>();
+
 
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"]

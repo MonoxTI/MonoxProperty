@@ -48,5 +48,18 @@ namespace MonoxProperty.Controllers
 
         return Ok(report);
     }
+
+    [HttpGet("reports/property-excel")]
+    public async Task<IActionResult> ExportPropertyExcel()
+    {
+    var data = await _reportService.GetPropertyReportAsync();
+    var file = _excelService.ExportPropertyReport(data);
+
+    return File(
+        file,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "PropertyReport.xlsx"
+    );
+    }
 }
 }
