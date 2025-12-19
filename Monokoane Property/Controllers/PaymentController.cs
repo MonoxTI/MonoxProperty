@@ -17,9 +17,12 @@ namespace MonoxProperty.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
-        public PaymentController(IPaymentService paymentService)
+        private readonly ExcelExportService _excelService;
+
+        public PaymentController(IPaymentService paymentService, ExcelExportService excelService)
         {
             _paymentService = paymentService;
+            _excelService = excelService;
         }
 
     [HttpPost("record")]
@@ -48,18 +51,29 @@ namespace MonoxProperty.Controllers
 
         return Ok(report);
     }
-
+/*
     [HttpGet("reports/property-excel")]
-    public async Task<IActionResult> ExportPropertyExcel()
+    public async Task<IActionResult> ExportPropertyExcel(
+    [FromQuery] int year,
+    [FromQuery] int month)
     {
-    var data = await _reportService.GetPropertyReportAsync();
-    var file = _excelService.ExportPropertyReport(data);
+    var data = await _reportService.GetPropertyReportAsync(year, month);
+
+    if (!data.Any())
+        return NotFound("No data found for the selected month.");
+
+    var file = _excelService.ExportMonthlySummaryPerProperty(
+        data,
+        year,
+        month
+    );
 
     return File(
         file,
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "PropertyReport.xlsx"
+        $"PropertyReport_{month}_{year}.xlsx"
     );
-    }
 }
+*/
+    }
 }

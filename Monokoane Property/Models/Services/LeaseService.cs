@@ -36,21 +36,25 @@ namespace MonoxProperty.Services
             return _mapper.Map<LeaseDto>(leases);
         }
 
-        public async Task<LeaseDto> AddLease (LeaseDto dto)
-        {
-            if(dto == null)
-            {
-                throw new ArgumentNullException(nameof(dto));
-            }
-            var existing = await _repo.Getby(dto.Id);
-            if(existing != null)
-            {
-                throw new DuplicateEntityException("Lease",dto.PropertyId.ToString());
-            }
-            var leases = _mapper.Map<Lease>(dto);
-            var newlease = await _repo.AddAsync(leases);
-            return _mapper.Map<LeaseDto>(newlease);
-        }
+        public async Task<LeaseDto> AddLease(LeaseDto dto)
+{
+    if (dto == null)
+        throw new ArgumentNullException(nameof(dto));
+
+    // ❌ dto.Id is useless for new leases – remove that check
+    // ✔️ You should later check overlapping leases instead
+
+    var lease = _mapper.Map<Lease>(dto);
+
+    // 🔥 FORCE UTC (THIS FIXES YOUR ERROR)
+    lease.Start = DateTime.SpecifyKind(dto.Start, DateTimeKind.Utc);
+    lease.End   = DateTime.SpecifyKind(dto.End, DateTimeKind.Utc);
+
+    var savedLease = await _repo.AddAsync(lease);
+
+    return _mapper.Map<LeaseDto>(savedLease);
+}
+
 
         public async Task<LeaseDto?> UpdateLease(int Id, LeaseDto dto)
         {

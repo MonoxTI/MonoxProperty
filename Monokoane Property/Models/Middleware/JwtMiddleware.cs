@@ -23,8 +23,7 @@ namespace MonoxProperty.Middleware
                     var handler = new JwtSecurityTokenHandler();
                     var jwt = handler.ReadJwtToken(token);
 
-                    Console.WriteLine("🔥 JWT Detected:");
-                    Console.WriteLine("   Subject: " + jwt.Subject);
+                    Console.WriteLine(" JWT Detected");
                     Console.WriteLine("   Expires: " + jwt.ValidTo);
                     Console.WriteLine("   Issuer : " + jwt.Issuer);
                 }

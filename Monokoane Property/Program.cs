@@ -47,7 +47,6 @@ namespace MonoxProperty
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<ExcelExportService>();
 
-
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException("Jwt:Key is missing.");
@@ -105,6 +104,8 @@ namespace MonoxProperty
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseMiddleware<ErrorHandlingMiddleware>();
 
             app.UseHttpsRedirection();
             app.UseRouting();
