@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
 using MonoxProperty;
 using MonoxProperty.Entities;
 using MonoxProperty.Interfaces;
@@ -19,12 +21,19 @@ namespace MonoxProperty
             var builder = WebApplication.CreateBuilder(args);
 
             // =========================
-            // SERVICES (REGISTER FIRST)
+            // SERVICES
             // =========================
 
-            builder.Services.AddControllers();
+            // Add Controllers with JSON enum support
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
             // DbContext
             builder.Services.AddDbContext<ApplicationDB>(options =>
                 options.UseNpgsql(
@@ -50,7 +59,6 @@ namespace MonoxProperty
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException("Jwt:Key is missing.");
-
             var key = Encoding.UTF8.GetBytes(jwtKey);
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -69,7 +77,7 @@ namespace MonoxProperty
                 });
 
             // =========================
-            // BUILD THE APP (LOCKS DI)
+            // BUILD THE APP
             // =========================
             var app = builder.Build();
 
@@ -86,12 +94,14 @@ namespace MonoxProperty
                     dbContext.Database.Migrate();
 
                     Console.WriteLine("Testing database connection...");
-                    dbContext.Database.CanConnect();
-                    Console.WriteLine("Database connected successfully.");
+                    if (dbContext.Database.CanConnect())
+                    {
+                        Console.WriteLine("✅ Database connected successfully.");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Database error: {ex.Message}");
+                    Console.WriteLine($"❌ Database error: {ex.Message}");
                     throw;
                 }
             }
@@ -106,7 +116,6 @@ namespace MonoxProperty
             }
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
-
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseJwtLogging();
