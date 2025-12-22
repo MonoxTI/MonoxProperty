@@ -1,5 +1,7 @@
 C:\Users\itumo\OneDrive\Desktop\Github Creation\MonoxProperty\Monokoane Property\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\itumo\OneDrive\Desktop\Github Creation\MonoxProperty\Monokoane Property\bin\Debug\net8.0\appsettings.json
+C:\Users\itumo\OneDrive\Desktop\Github Creation\MonoxProperty\Monokoane Property\bin\Debug\net8.0\Client\package-lock.json
+C:\Users\itumo\OneDrive\Desktop\Github Creation\MonoxProperty\Monokoane Property\bin\Debug\net8.0\Client\package.json
 C:\Users\itumo\OneDrive\Desktop\Github Creation\MonoxProperty\Monokoane Property\bin\Debug\net8.0\Monokoane Property.staticwebassets.endpoints.json
 C:\Users\itumo\OneDrive\Desktop\Github Creation\MonoxProperty\Monokoane Property\bin\Debug\net8.0\Monokoane Property.exe
 C:\Users\itumo\OneDrive\Desktop\Github Creation\MonoxProperty\Monokoane Property\bin\Debug\net8.0\Monokoane Property.deps.json

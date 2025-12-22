@@ -76,6 +76,18 @@ namespace MonoxProperty
                     };
                 });
 
+            // CORS
+                builder.Services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        policy.WithOrigins("http://localhost:5173", "https://localhost:5173") // Vite default
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                    });
+                });
+
             // =========================
             // BUILD THE APP
             // =========================
@@ -122,6 +134,7 @@ namespace MonoxProperty
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+            app.UseCors();
 
             app.Run();
         }
