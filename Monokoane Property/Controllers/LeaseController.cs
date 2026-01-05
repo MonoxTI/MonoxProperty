@@ -1,111 +1,90 @@
-using MonoxProperty.Dtos;
 using Microsoft.AspNetCore.Mvc;
-using MonoxProperty.Entities;
+using MonoxProperty.Dtos;
 using MonoxProperty.Interfaces;
-using MonoxProperty.Repository;
-using MonoxProperty.Services;
-using MonoxProperty.Mapping;
-using MonoxProperty.Exceptions;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-
 
 namespace MonoxProperty.Controllers
 {
-[Authorize]
-[ApiController]
-[Route("api/lease")]
-public class LeaseController : ControllerBase
-{
-    private readonly ILeaseService services;
-    public LeaseController(ILeaseService LeaseService)
+    [Authorize]
+    [ApiController]
+    [Route("api/lease")]
+    public class LeaseController : ControllerBase
     {
-        services = LeaseService;
-    }
+        private readonly ILeaseService _service;
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<LeaseDto>>> GetLeases()
-    {
-        var leases = await services.GetAllLeases();
-        return Ok(leases);
-    }
+        public LeaseController(ILeaseService leaseService)
+        {
+            _service = leaseService;
+        }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<LeaseDto>> GetLeasebyId(int id)
-    {
-            if(id <= 0)
-            {
-                return BadRequest("Lease ID required.");
-            }
-            var lease = await services.GetLeasebyId(id);
-            if(lease == null)
-            return NotFound($"lease with id {id} not found ");
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<LeaseDto>>> GetLeases()
+        {
+            var leases = await _service.GetAllLeases();
+            return Ok(leases);
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<LeaseDto>> GetLeaseById(int id)
+        {
+            if (id <= 0)
+                return BadRequest("Lease ID must be greater than 0.");
+
+            var lease = await _service.GetLeaseById(id);
+            if (lease == null)
+                return NotFound($"Lease with id {id} not found.");
 
             return Ok(lease);
-    }
+        }
 
-    [HttpPost("add")]
-    public async Task<ActionResult<LeaseDto>> AddLease([FromBody] LeaseDto data)
-    {
-        try
+        [HttpPost("add")]
+        public async Task<ActionResult<LeaseDto>> AddLease([FromBody] LeaseDto dto)
         {
-            if(data == null)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
             {
-                return BadRequest("Lease data is required.");
-            }
-
-            var addedlease = await services.AddLease(data);
-
-            return CreatedAtAction(
-                nameof(GetLeasebyId),
-                new {id = addedlease.Id},
-                addedlease
+                var addedLease = await _service.AddLease(dto);
+                return CreatedAtAction(
+                    nameof(GetLeaseById),
+                    new { id = addedLease.Id },
+                    addedLease
                 );
-        }catch(DuplicateEntityException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }catch(ArgumentException ex)
-        {
-            return BadRequest(new {message = ex.Message });
-        }
-    }
-    
-
-    [HttpPut("int{id}")]
-    public async Task<ActionResult<LeaseDto>> UpdateLease (int id, [FromBody] LeaseDto dto)
-    {
-        if(dto == null || id <= 0)
-        return BadRequest(new { message = "Lease id is required." });
-
-        if(dto.Id != id)
-        {
-            return BadRequest("Lease ID mismatch between URL and body." );
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        var updatedLease = await services.UpdateLease(id, dto);
-        if(updatedLease == null)
-        return NotFound($"Lease with id {id} not found." );
+        [HttpPut("{id:int}")] // ✅ FIXED: Correct route template
+        public async Task<ActionResult<LeaseDto>> UpdateLease(int id, [FromBody] LeaseDto dto)
+        {
+            if (!ModelState.IsValid || id <= 0)
+                return BadRequest("Invalid lease data or ID.");
 
-        return Ok(updatedLease);
-    }
+            if (dto.Id != id)
+                return BadRequest("Lease ID in URL does not match ID in body.");
 
+            var updatedLease = await _service.UpdateLease(id, dto);
+            if (updatedLease == null)
+                return NotFound($"Lease with id {id} not found.");
 
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult> DeleteLease (int id)
-    {
-            if(id <= 0)
-            {
-                return BadRequest("Lease ID is required." );
-            }
+            return Ok(updatedLease);
+        }
 
-            var deleted = await services.DeleteLease(id);
-            if(!deleted)
-            {
-                return NotFound("Lease with id {id} not found." );
-            }
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult> DeleteLease(int id)
+        {
+            if (id <= 0)
+                return BadRequest("Lease ID must be greater than 0.");
 
-            return Ok(new { message = "Lease deleted successfully." });
+            var deleted = await _service.DeleteLease(id);
+            if (!deleted)
+                return NotFound($"Lease with id {id} not found.");
+
+            return NoContent(); // ✅ Standard for successful DELETE
         }
     }
 }
-

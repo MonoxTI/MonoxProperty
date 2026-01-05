@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MonoxProperty.Interfaces;
-using MonoxProperty.Services;
 using MonoxProperty.Dtos;
-using MonoxProperty.Entities;
-using BCrypt.Net; // Make sure to import
+using MonoxProperty.Services;
 
 namespace MonoxProperty.Controllers
 {
@@ -11,59 +9,50 @@ namespace MonoxProperty.Controllers
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly IUserRepo _repo;
-        private readonly JwtService _jwt;
+        private readonly AuthService _authService;
+        private readonly JwtService _jwtService;
 
-        public AuthController(IUserRepo repo, JwtService jwt)
+        // ✅ Inject AuthService instead of IUserRepo
+        public AuthController(AuthService authService, JwtService jwtService)
         {
-            _repo = repo;
-            _jwt = jwt;
+            _authService = authService;
+            _jwtService = jwtService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
         {
-            // Validate model (optional but good)
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Check if email already exists
-            var existingUser = await _repo.GetByEmailAsync(dto.Email);
-            if (existingUser != null)
-                return BadRequest("Email is already registered.");
-
-            // Hash password
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-
-            // Create user (using Email and FullName from DTO)
-            var user = new User
+            try
             {
-                FullName = dto.FullName,
-                Email = dto.Email.Trim().ToLower(),
-                PasswordHash = hashedPassword
-            };
-
-            await _repo.CreateAsync(user);
-
-            return Ok("User registered successfully.");
+                var user = await _authService.RegisterAsync(dto);
+                return Ok(new { message = "User registered successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            // Find user by email
-            var user = await _repo.GetByEmailAsync(dto.Email);
-            if (user == null)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var user = await _authService.LoginAsync(dto);
+                var token = _jwtService.GenerateToken(user);
+                return Ok(new { token });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // ✅ Generic error message (prevents email enumeration)
                 return Unauthorized("Invalid email or password.");
-
-            // Verify password
-            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Invalid email or password.");
-
-            // Generate JWT
-            var token = _jwt.GenerateToken(user);
-
-            return Ok(new { token });
+            }
         }
     }
 }

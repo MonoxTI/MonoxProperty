@@ -140,3 +140,9 @@ namespace MonoxProperty
         }
     }
 }
+/*
+dotnet clean
+dotnet build
+dotnet run
+
+*/

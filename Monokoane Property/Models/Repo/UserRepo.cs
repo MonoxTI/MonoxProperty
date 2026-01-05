@@ -15,13 +15,23 @@ namespace MonoxProperty.Repository
 
         public async Task<User?> GetByEmailAsync(string email)
         {
+            if (string.IsNullOrWhiteSpace(email))
+                return null;
+
+            // Normalize email to lowercase for consistent lookup
+            var normalizedEmail = email.ToLower().Trim();
             return await _context.Users
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+                .FirstOrDefaultAsync(u => u.Email == normalizedEmail);
         }
 
         public async Task<User> CreateAsync(User user)
         {
-            // Assume password is already hashed by the service layer
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            // Ensure email is normalized before saving
+            user.Email = user.Email?.ToLower().Trim() ?? string.Empty;
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return user;

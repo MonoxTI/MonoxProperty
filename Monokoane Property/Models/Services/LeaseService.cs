@@ -26,7 +26,7 @@ namespace MonoxProperty.Services
             return _mapper.Map<IEnumerable<LeaseDto>>(leases);
         }
 
-        public async Task<LeaseDto?> GetLeasebyId(int Id)
+        public async Task<LeaseDto?> GetLeaseById(int Id)
         {
             var leases = await _repo.GetIdAsync(Id);
             if(leases == null)
