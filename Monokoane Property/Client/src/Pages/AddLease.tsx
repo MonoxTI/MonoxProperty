@@ -1,8 +1,12 @@
-// src/components/AllLeases.tsx
-import React, { useState, useEffect } from 'react';
+// src/components/AddLease.tsx
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-// Define the lease structure (matches your C# LeaseDto)
-interface Lease {
+/* =======================
+   Types (aligned with C# LeaseDto)
+======================= */
+
+interface LeaseDto {
   id: number;
   propertyId: number;
   tenantId: number;
@@ -13,161 +17,315 @@ interface Lease {
   bond: number;
 }
 
-const AllLeases: React.FC = () => {
-  const [leases, setLeases] = useState<Lease[]>([]);
-  const [loading, setLoading] = useState(true);
+interface CreateLeaseRequest {
+  propertyId: number;
+  tenantId: number;
+  start: string;
+  end: string;
+  rent: number;
+  levy: number;
+  bond: number;
+}
+
+interface ApiErrorResponse {
+  title?: string;
+  message?: string;
+  errors?: Record<string, string[]>;
+}
+
+const AddLease: React.FC = () => {
+  const [propertyId, setPropertyId] = useState("");
+  const [tenantId, setTenantId] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [rent, setRent] = useState("");
+  const [levy, setLevy] = useState("");
+  const [bond, setBond] = useState("");
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  // Fetch leases when component loads
-  useEffect(() => {
-    const fetchLeases = async () => {
-      try {
-        // Get JWT token from localStorage (if exists)
-        const token = localStorage.getItem('token');
-        const headers = token 
-          ? { Authorization: `Bearer ${token}` } 
-          : {};
+  const navigate = useNavigate();
 
-        const response = await fetch('http://localhost:5153/api/lease', { headers });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to load leases: ${response.status} ${response.statusText}`);
-        }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
 
-        const  Lease[] = await response.json();
-        setLeases(data);
-      } catch (err: any) {
-        console.error('Error fetching leases:', err);
-        setError(err.message || 'Failed to load leases. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
+    // Parse and validate numbers
+    const propertyIdNum = parseInt(propertyId, 10);
+    const tenantIdNum = parseInt(tenantId, 10);
+    const rentNum = parseFloat(rent);
+    const levyNum = parseFloat(levy);
+    const bondNum = parseFloat(bond);
+
+    if (isNaN(propertyIdNum) || propertyIdNum <= 0) {
+      setError("Valid Property ID is required");
+      return;
+    }
+
+    if (isNaN(tenantIdNum) || tenantIdNum <= 0) {
+      setError("Valid Tenant ID is required");
+      return;
+    }
+
+    if (isNaN(rentNum) || rentNum <= 0) {
+      setError("Rent must be a positive amount");
+      return;
+    }
+
+    if (isNaN(levyNum) || levyNum < 0) {
+      setError("Levy must be zero or positive");
+      return;
+    }
+
+    if (isNaN(bondNum) || bondNum < 0) {
+      setError("Bond must be zero or positive");
+      return;
+    }
+
+    if (!start) {
+      setError("Start date is required");
+      return;
+    }
+
+    if (!end) {
+      setError("End date is required");
+      return;
+    }
+
+    if (new Date(end) < new Date(start)) {
+      setError("End date cannot be before start date");
+      return;
+    }
+
+    // Convert dates to ISO strings (UTC midnight)
+    const startIso = new Date(start).toISOString();
+    const endIso = new Date(end).toISOString();
+
+    const payload: CreateLeaseRequest = {
+      propertyId: propertyIdNum,
+      tenantId: tenantIdNum,
+      start: startIso,
+      end: endIso,
+      rent: rentNum,
+      levy: levyNum,
+      bond: bondNum,
     };
 
-    fetchLeases();
-  }, []);
+    const token = localStorage.getItem("token");
 
-  // Format dates to DD/MM/YYYY
-  const formatDate = (isoDate: string) => {
-    return new Date(isoDate).toLocaleDateString('en-ZA');
+    try {
+      setLoading(true);
+
+      const res = await fetch(`http://localhost:5153/api/lease`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const text = await res.text();
+
+      if (!res.ok) {
+        let errorMessage = `Failed to create lease (${res.status})`;
+        try {
+          if (text.trim()) {
+            const errorData = JSON.parse(text) as ApiErrorResponse;
+            errorMessage = errorData.message || errorData.title || errorMessage;
+          }
+        } catch {
+          console.warn("Non-JSON error response:", text.substring(0, 200));
+          errorMessage = `Server error: ${res.status} ${res.statusText || ""}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      setSuccess(true);
+      setTimeout(() => navigate("/leases"), 2000);
+    } catch (err) {
+      console.error("Add lease error:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="container mt-5 text-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="mt-2">Loading leases...</p>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="container mt-5">
-        <div className="alert alert-danger d-flex align-items-center" role="alert">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" 
-            className="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16">
-            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-          </svg>
-          <div>
-            <h4 className="alert-heading">Error Loading Leases</h4>
-            <p>{error}</p>
-            <button 
-              className="btn btn-outline-danger btn-sm" 
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="text-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" 
-            className="bi bi-file-earmark-text me-2" viewBox="0 0 16 16">
-            <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
-            <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v3.5a.5.5 0 0 0 .5.5h3.5L9.5 1z"/>
-          </svg>
-          Property Leases
-        </h1>
-        <span className="badge bg-primary fs-5">
-          {leases.length} {leases.length === 1 ? 'Lease' : 'Leases'}
-        </span>
-      </div>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-12 col-md-8 col-lg-6 col-xl-5">
+          <div className="card shadow-sm">
+            <div className="card-body p-4">
+              <h2 className="card-title text-center mb-4 fw-bold">Add New Lease</h2>
 
-      {leases.length === 0 ? (
-        <div className="text-center py-5">
-          <div className="text-muted">
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" 
-              className="bi bi-house-door mb-3" viewBox="0 0 16 16">
-              <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4H2.5z"/>
-            </svg>
-            <h3>No Leases Found</h3>
-            <p className="lead">Your property portfolio is empty</p>
-            <p className="text-muted">Create a new lease to get started</p>
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="alert alert-success" role="alert">
+                  <h5 className="mb-2">Lease Created Successfully!</h5>
+                  <p className="mb-0">Redirecting to leases list...</p>
+                </div>
+              )}
+
+              {!success && (
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label htmlFor="propertyId" className="form-label">
+                      Property ID
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control w-100"
+                      id="propertyId"
+                      value={propertyId}
+                      onChange={(e) => setPropertyId(e.target.value)}
+                      min="1"
+                      required
+                      placeholder="e.g. 1, 2, 3..."
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="tenantId" className="form-label">
+                      Tenant ID
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control w-100"
+                      id="tenantId"
+                      value={tenantId}
+                      onChange={(e) => setTenantId(e.target.value)}
+                      min="1"
+                      required
+                      placeholder="e.g. 101, 102..."
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="start" className="form-label">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      className="form-control w-100"
+                      id="start"
+                      value={start}
+                      onChange={(e) => setStart(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="end" className="form-label">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      className="form-control w-100"
+                      id="end"
+                      value={end}
+                      onChange={(e) => setEnd(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="rent" className="form-label">
+                      Monthly Rent (R)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control w-100"
+                      id="rent"
+                      value={rent}
+                      onChange={(e) => setRent(e.target.value)}
+                      min="0.01"
+                      step="0.01"
+                      required
+                      placeholder="e.g. 8500.00"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="levy" className="form-label">
+                      Monthly Levy (R)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control w-100"
+                      id="levy"
+                      value={levy}
+                      onChange={(e) => setLevy(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      required
+                      placeholder="e.g. 950.00"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="bond" className="form-label">
+                      Deposit / Bond (R)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control w-100"
+                      id="bond"
+                      value={bond}
+                      onChange={(e) => setBond(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      required
+                      placeholder="e.g. 17000.00"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-100 py-2"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span
+                          className="spinner-border spinner-border-sm me-2"
+                          role="status"
+                          aria-hidden="true"
+                        ></span>
+                        Saving...
+                      </>
+                    ) : (
+                      "Create Lease"
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {!success && (
+                <div className="mt-3 text-center">
+                  <a href="/leases" className="text-decoration-none">
+                    ← Back to Leases
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="table-responsive shadow rounded">
-          <table className="table table-hover mb-0">
-            <thead className="table-light">
-              <tr>
-                <th>ID</th>
-                <th>Property</th>
-                <th>Tenant</th>
-                <th>Period</th>
-                <th className="text-end">Rent</th>
-                <th className="text-end">Levy</th>
-                <th className="text-end">Bond</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leases.map(lease => (
-                <tr key={lease.id} className="align-middle">
-                  <td className="fw-bold text-primary">#{lease.id}</td>
-                  <td>#{lease.propertyId}</td>
-                  <td>#{lease.tenantId}</td>
-                  <td>
-                    <span className="badge bg-info text-dark">
-                      {formatDate(lease.start)}
-                    </span>
-                    <span className="mx-2">→</span>
-                    <span className="badge bg-warning text-dark">
-                      {formatDate(lease.end)}
-                    </span>
-                  </td>
-                  <td className="text-end fw-bold text-success">R{lease.rent.toLocaleString()}</td>
-                  <td className="text-end">R{lease.levy.toLocaleString()}</td>
-                  <td className="text-end">R{lease.bond.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="mt-4 text-muted small">
-        <p>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-            className="bi bi-info-circle me-1" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M8.93 6.588l-2.29.924L5.38 5.24a1 1 0 0 1 1.414-1.414l1.82 1.819 1.82-1.82a1 1 0 0 1 1.414 1.414L10.686 6.5l-1.756.702z"/>
-            <path d="M8.5 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-          </svg>
-          All financial values in South African Rand (ZAR)
-        </p>
       </div>
     </div>
   );
 };
 
-export default AllLeases;
+export default AddLease;

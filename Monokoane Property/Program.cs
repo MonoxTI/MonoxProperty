@@ -55,6 +55,7 @@ namespace MonoxProperty
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<ExcelExportService>();
+            builder.Services.AddScoped<AuthService>();
 
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"]
@@ -76,17 +77,17 @@ namespace MonoxProperty
                     };
                 });
 
-            // CORS
-                builder.Services.AddCors(options =>
+            // ✅ CORS - Configure with explicit origin for React/Vite dev server
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
                 {
-                    options.AddDefaultPolicy(policy =>
-                    {
-                        policy.WithOrigins("http://localhost:5173", "https://localhost:5173") // Vite default
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
-                    });
+                    policy.WithOrigins("http://localhost:5173") // Vite default dev server
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials(); // Safe because origin is explicit
                 });
+            });
 
             // =========================
             // BUILD THE APP
@@ -127,14 +128,20 @@ namespace MonoxProperty
                 app.UseSwaggerUI();
             }
 
-            app.UseMiddleware<ErrorHandlingMiddleware>();
             app.UseHttpsRedirection();
+
+            // ✅ CORS MUST come BEFORE UseRouting, UseAuthentication, etc.
+            app.UseCors(); // Applies the default policy defined above
+
             app.UseRouting();
+
+            app.UseMiddleware<ErrorHandlingMiddleware>();
             app.UseJwtLogging();
+
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapControllers();
-            app.UseCors();
 
             app.Run();
         }

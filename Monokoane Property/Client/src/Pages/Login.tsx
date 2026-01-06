@@ -1,13 +1,12 @@
 // src/components/Login.tsx
 import React, { useState } from 'react';
-import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginDto {
   email: string;
   password: string;
 }
-/*
+
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<LoginDto>({
     email: '',
@@ -15,7 +14,6 @@ const Login: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,20 +27,19 @@ const Login: React.FC = () => {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // if using cookies for auth
         body: JSON.stringify(formData)
       });
 
-      const  { token } || { message: string } = await response.json();
-
       if (!response.ok) {
-        throw new Error('Invalid email or password');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
       }
 
-      // Save token and redirect
-      login(data.token);
-      navigate('/properties'); // Redirect after login
+      // Assuming successful login → redirect to dashboard or home
+      navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -51,51 +48,66 @@ const Login: React.FC = () => {
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
-        <div className="col-md-6 col-lg-4">
-          <div className="card shadow">
-            <div className="card-body">
-              <h2 className="card-title text-center mb-4">Login</h2>
-              
+        <div className="col-12 col-md-8 col-lg-6 col-xl-4">
+          <div className="card shadow-sm">
+            <div className="card-body p-4">
+              <h2 className="card-title text-center mb-4 fw-bold">Login</h2>
+
               {error && (
-                <div className="alert alert-danger">{error}</div>
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
               )}
-              
+
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label htmlFor="email" className="form-label">Email</label>
                   <input
                     type="email"
-                    className="form-control"
+                    className="form-control w-100"
                     id="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
+                    autoComplete="email"
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <label htmlFor="password" className="form-label">Password</label>
                   <input
                     type="password"
-                    className="form-control"
+                    className="form-control w-100"
                     id="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
+                    autoComplete="current-password"
                   />
                 </div>
-                
-                <button 
-                  type="submit" 
-                  className="btn btn-primary w-100"
+
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100 py-2"
                   disabled={loading}
                 >
-                  {loading ? 'Logging in...' : 'Login'}
+                  {loading ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      Logging in...
+                    </>
+                  ) : (
+                    'Login'
+                  )}
                 </button>
               </form>
-              
+
               <div className="mt-3 text-center">
-                <p className="mb-0">Don't have an account?</p>
+                <p className="mb-1">Don’t have an account?</p>
                 <a href="/register" className="text-decoration-none">Register here</a>
               </div>
             </div>
@@ -107,4 +119,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-*/
