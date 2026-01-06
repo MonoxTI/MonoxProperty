@@ -1,5 +1,6 @@
 // src/components/AllTenants.tsx
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 interface Tenant {
   id: number;
@@ -16,23 +17,44 @@ const AllTenants: React.FC = () => {
   useEffect(() => {
     const fetchTenants = async () => {
       try {
-        // Get JWT token if exists
         const token = localStorage.getItem('token');
-        const headers = token 
-          ? { Authorization: `Bearer ${token}` } 
-          : {};
 
-        const response = await fetch('http://localhost:5153/api/tenant', { headers });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to load tenants: ${response.status} ${response.statusText}`);
+        const res = await fetch('http://localhost:5153/api/tenant', {
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        });
+
+        const text = await res.text();
+
+        if (!res.ok) {
+          let errorMessage = `Failed to load tenants (${res.status})`;
+          try {
+            if (text.trim()) {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorData.title || errorMessage;
+            }
+          } catch {
+            console.warn('Non-JSON error response:', text.substring(0, 200));
+            errorMessage = `Server error: ${res.status} ${res.statusText || ''}`;
+          }
+          throw new Error(errorMessage);
         }
 
-        const  Tenant[] = await response.json();
-        setTenants(data);
-      } catch (err: any) {
-        console.error('Error fetching tenants:', err);
-        setError(err.message || 'Failed to load tenants. Please try again later.');
+        if (!text.trim()) {
+          setTenants([]);
+          return;
+        }
+
+        const data = JSON.parse(text) as Tenant[];
+        setTenants(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Fetch tenants error:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'An unexpected error occurred while loading tenants.'
+        );
       } finally {
         setLoading(false);
       }
@@ -41,117 +63,108 @@ const AllTenants: React.FC = () => {
     fetchTenants();
   }, []);
 
-  // Format phone number for display
-  const formatPhoneNumber = (phone: string) => {
-    // Simple cleanup: remove non-digits except +
-    return phone.replace(/[^+\d]/g, '').replace(/(\d{3})(\d)/, '$1 $2');
+  // Format South African phone number: +27 82 123 4567 or 082 123 4567
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove all non-digit characters (keep +)
+    let cleaned = phone.replace(/[^\d+]/g, '');
+
+    // If starts with +27, format as +27 XX XXX XXXX
+    if (cleaned.startsWith('+27') && cleaned.length === 12) {
+      return `+27 ${cleaned.slice(3, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(8)}`;
+    }
+    // If starts with 0 and 10 digits, format as 0XX XXX XXXX
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+      return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+    }
+    // Fallback: just clean spacing
+    return phone.replace(/(\d{3})(\d)/, '$1 $2').replace(/(\d{3})(\d)/, '$1 $2');
   };
 
-  if (loading) {
-    return (
-      <div className="container mt-5 text-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="mt-2">Loading tenants...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mt-5">
-        <div className="alert alert-danger d-flex align-items-center" role="alert">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" 
-            className="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16">
-            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-          </svg>
-          <div>
-            <h4 className="alert-heading">Error Loading Tenants</h4>
-            <p>{error}</p>
-            <button 
-              className="btn btn-outline-danger btn-sm" 
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container py-4">
+    <div className="container mt-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="text-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" 
-            className="bi bi-people me-2" viewBox="0 0 16 16">
-            <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h9Zm-7.978-1A.271.271 0 0 1 7 12.996c.001-.266.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.274.272h-.008Zm-4.688-2a1.99 1.99 0 0 0-.003-2A1.99 1.99 0 0 0 4 8a1.99 1.99 0 0 0-1.307 3.978h-.02Z"/>
-          </svg>
-          Property Tenants
-        </h1>
-        <span className="badge bg-primary fs-5">
-          {tenants.length} {tenants.length === 1 ? 'Tenant' : 'Tenants'}
-        </span>
+        <h2 className="mb-0">Tenants</h2>
+        <Link to="/tenants/add" className="btn btn-primary">
+          Add Tenant
+        </Link>
       </div>
 
-      {tenants.length === 0 ? (
-        <div className="text-center py-5">
-          <div className="text-muted">
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" 
-              className="bi bi-person-lines-fill mb-3" viewBox="0 0 16 16">
-              <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6s-1 0-1-1 1-4 6-4 6 3 0 4-1 1-1 1H1zM11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5zm.5 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5zm.5 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5zm.5 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5zm-7-8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5zm.5 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5zm.5 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5zm.5 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-.5a.5.5 0 0 1-.5-.5z"/>
-            </svg>
-            <h3>No Tenants Found</h3>
-            <p className="lead">Your tenant list is empty</p>
-            <p className="text-muted">Add a new tenant to get started</p>
-          </div>
-        </div>
-      ) : (
-        <div className="table-responsive shadow rounded">
-          <table className="table table-hover mb-0">
-            <thead className="table-light">
-              <tr>
-                <th>ID</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tenants.map(tenant => (
-                <tr key={tenant.id} className="align-middle">
-                  <td className="fw-bold text-primary">#{tenant.id}</td>
-                  <td>{tenant.fullName}</td>
-                  <td>
-                    <a href={`mailto:${tenant.email}`} className="text-decoration-none">
-                      {tenant.email}
-                    </a>
-                  </td>
-                  <td>
-                    <a href={`tel:${tenant.phoneNumber}`} className="text-decoration-none">
-                      {formatPhoneNumber(tenant.phoneNumber)}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
         </div>
       )}
 
-      <div className="mt-4 text-muted small">
-        <p>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-            className="bi bi-info-circle me-1" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M8.93 6.588l-2.29.924L5.38 5.24a1 1 0 0 1 1.414-1.414l1.82 1.819 1.82-1.82a1 1 0 0 1 1.414 1.414L10.686 6.5l-1.756.702z"/>
-            <path d="M8.5 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-          </svg>
-          Click email/phone to contact tenants directly
-        </p>
-      </div>
+      {loading ? (
+        <div className="text-center py-5">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Loading tenants...</p>
+        </div>
+      ) : (
+        <div className="card shadow-sm">
+          <div className="card-body p-0">
+            {tenants.length === 0 ? (
+              <div className="text-center py-5">
+                <div className="mb-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="64"
+                    height="64"
+                    fill="currentColor"
+                    className="bi bi-person text-muted"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 0 4Zm-1-.004c-.001-.246-.154-.487-.407-.636C10.876 11.225 10.395 11 10 11c-.4 0-.8.2-.972.5h-.028a.5.5 0 0 1-.5-.5Z" />
+                  </svg>
+                </div>
+                <p className="mb-3">No tenants found.</p>
+                <Link to="/tenants/add" className="btn btn-primary">
+                  Add Your First Tenant
+                </Link>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-hover mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>Full Name</th>
+                      <th>Email</th>
+                      <th>Phone Number</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tenants.map((tenant) => (
+                      <tr key={tenant.id} className="align-middle">
+                        <td>#{tenant.id}</td>
+                        <td>{tenant.fullName}</td>
+                        <td>
+                          <a
+                            href={`mailto:${tenant.email}`}
+                            className="text-decoration-none"
+                          >
+                            {tenant.email}
+                          </a>
+                        </td>
+                        <td>
+                          <a
+                            href={`tel:${tenant.phoneNumber}`}
+                            className="text-decoration-none"
+                          >
+                            {formatPhoneNumber(tenant.phoneNumber)}
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
