@@ -107,9 +107,9 @@ const AddTenant: React.FC = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-12 col-md-8 col-lg-6 col-xl-5">
+    <div className="container-fluid mt-5">
+      <div className="row">
+        <div className="col-12">
           <div className="card shadow-sm">
             <div className="card-body p-4">
               <h2 className="card-title text-center mb-4 fw-bold">Add New Tenant</h2>
@@ -138,7 +138,6 @@ const AddTenant: React.FC = () => {
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
-                      placeholder="e.g., Itumeleng Monokoane"
                       required
                     />
                   </div>
@@ -152,10 +151,8 @@ const AddTenant: React.FC = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="e.g., itumeleng@example.com"
                       required
                     />
-                    <div className="form-text">We'll never share your email with anyone else.</div>
                   </div>
 
                   <div className="mb-4">
@@ -167,11 +164,9 @@ const AddTenant: React.FC = () => {
                       name="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handleChange}
-                      placeholder="e.g., +27 82 123 4567"
                       required
                     />
-                    <div className="form-text">Include country code (e.g., +27 for South Africa)</div>
-                  </div>
+                   </div>
 
                   <button
                     type="submit"
@@ -192,14 +187,6 @@ const AddTenant: React.FC = () => {
                     )}
                   </button>
                 </form>
-              )}
-
-              {!success && (
-                <div className="mt-3 text-center">
-                  <a href="/tenants" className="text-decoration-none">
-                    ← Back to Tenants
-                  </a>
-                </div>
               )}
             </div>
           </div>

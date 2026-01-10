@@ -75,21 +75,17 @@ const AddProperty: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      // ✅ Get raw text first to avoid JSON parsing crash
       const text = await res.text();
 
-      // Handle non-OK responses
       if (!res.ok) {
         let errorMessage = `Failed to create property (${res.status})`;
         
-        // Try to parse as JSON error (if possible)
         try {
           if (text.trim()) {
             const errorData = JSON.parse(text) as ApiErrorResponse;
             errorMessage = errorData.message || errorData.title || errorMessage;
           }
         } catch {
-          // If not JSON (e.g., HTML error page), show status
           console.warn("Non-JSON error response from server:", text.substring(0, 200));
           errorMessage = `Server error: ${res.status} ${res.statusText || ''}`;
         }
@@ -129,9 +125,9 @@ const AddProperty: React.FC = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-12 col-md-8 col-lg-6 col-xl-5">
+    <div className="container-fluid mt-5">
+      <div className="row">
+        <div className="col-12">
           <div className="card shadow-sm">
             <div className="card-body p-4">
               <h2 className="card-title text-center mb-4 fw-bold">Add New Property</h2>
@@ -241,14 +237,6 @@ const AddProperty: React.FC = () => {
                   )}
                 </button>
               </form>
-
-              {!response && (
-                <div className="mt-3 text-center">
-                  <a href="/properties" className="text-decoration-none">
-                    ← Back to Properties
-                  </a>
-                </div>
-              )}
             </div>
           </div>
         </div>

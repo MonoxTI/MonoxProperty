@@ -1,44 +1,42 @@
-// src/components/DeleteExpense.tsx
+// src/components/ExpenseLookupDelete.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-const DeleteExpense: React.FC = () => {
-  const [expenseId, setExpenseId] = useState<string>("");
+// Match your C# ExpenseDto
+interface ExpenseDto {
+  id: number;
+  propertyId: number;
+  description: string;
+  amount: number;
+  date: string; // ISO date string
+}
+
+const ExpenseLookupDelete: React.FC = () => {
+  const [searchId, setSearchId] = useState<string>("");
+  const [expense, setExpense] = useState<ExpenseDto | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showConfirm, setShowConfirm] = useState<boolean>(false);
-  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
-  const navigate = useNavigate();
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const idNum = Number(expenseId.trim());
+    const idNum = Number(searchId.trim());
     if (!idNum || idNum <= 0 || !Number.isInteger(idNum)) {
       setError("Please enter a valid expense ID (positive whole number)");
       return;
     }
 
-    setError(null);
-    setSuccess(null);
-    setShowConfirm(true);
-    setConfirmId(idNum);
-  };
-
-  const handleDelete = async () => {
-    if (confirmId === null) return;
-
     setLoading(true);
     setError(null);
-    setSuccess(null);
+    setExpense(null);
+    setDeleteSuccess(null);
 
     try {
       const token = localStorage.getItem("token");
       
-      const response = await fetch(`http://localhost:5153/api/expense/${confirmId}`, {
-        method: "DELETE",
+      const response = await fetch(`http://localhost:5153/api/expense/${idNum}`, {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
         }
@@ -49,7 +47,41 @@ const DeleteExpense: React.FC = () => {
       }
 
       if (!response.ok) {
-        // Try to get error message from backend
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setExpense(data as ExpenseDto);
+    } catch (err: any) {
+      console.error("Search error:", err);
+      setError(err.message || "Failed to fetch expense");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!expense) return;
+
+    if (!window.confirm(`Are you sure you want to delete Expense #${expense.id}? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleteLoading(true);
+    setError(null);
+    setDeleteSuccess(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`http://localhost:5153/api/expense/${expense.id}`, {
+        method: "DELETE",
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        }
+      });
+
+      if (!response.ok) {
         const text = await response.text();
         let message = `Failed to delete expense (${response.status})`;
         try {
@@ -63,86 +95,56 @@ const DeleteExpense: React.FC = () => {
         throw new Error(message);
       }
 
-      setSuccess(`Expense #${confirmId} has been deleted successfully.`);
-      setExpenseId("");
-      setShowConfirm(false);
-      setConfirmId(null);
-
-      // Optional: redirect after 2 seconds
-      setTimeout(() => navigate("/expenses"), 2000);
+      setDeleteSuccess(`Expense #${expense.id} has been deleted successfully.`);
+      setExpense(null);
+      setSearchId("");
     } catch (err: any) {
       console.error("Delete error:", err);
-      setError(err.message || "Failed to delete expense. Please try again.");
+      setError(err.message || "Failed to delete expense");
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    setShowConfirm(false);
-    setConfirmId(null);
-    setExpenseId("");
+  // Format date as DD/MM/YYYY (South African format)
+  const formatDate = (isoString: string): string => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString('en-ZA');
+  };
+
+  // Format currency as R1,234.50
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR',
+      minimumFractionDigits: 2,
+    }).format(amount);
   };
 
   return (
     <div className="container mt-4">
-      <h2 className="mb-4">Delete Expense by ID</h2>
+      <h2 className="mb-4">Expense Lookup & Delete</h2>
       
-      {!showConfirm ? (
-        <form onSubmit={handleSearch} className="mb-4">
-          <div className="input-group">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Enter expense ID to delete (e.g., 1, 2, 3...)"
-              value={expenseId}
-              onChange={(e) => setExpenseId(e.target.value)}
-              min="1"
-              disabled={loading}
-            />
-            <button 
-              className="btn btn-danger" 
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Searching..." : "Delete"}
-            </button>
-          </div>
-        </form>
-      ) : (
-        <div className="mb-4">
-          <div className="alert alert-warning">
-            <h5 className="alert-heading">⚠️ Confirm Deletion</h5>
-            <p>
-              Are you sure you want to delete <strong>Expense #{confirmId}</strong>?
-              This action <strong>cannot be undone</strong> and will permanently remove the expense record.
-            </p>
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-danger"
-                onClick={handleDelete}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Deleting...
-                  </>
-                ) : (
-                  "Yes, Delete"
-                )}
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      <form onSubmit={handleSearch} className="mb-4">
+        <div className="input-group">
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Enter expense ID (e.g., 1, 2, 3...)"
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            min="1"
+            disabled={loading || deleteLoading}
+          />
+          <button 
+            className="btn btn-primary" 
+            type="submit"
+            disabled={loading || deleteLoading}
+          >
+            {loading ? "Searching..." : "Search"}
+          </button>
         </div>
-      )}
+      </form>
 
       {/* Error Message */}
       {error && (
@@ -151,14 +153,47 @@ const DeleteExpense: React.FC = () => {
         </div>
       )}
 
-      {/* Success Message */}
-      {success && (
+      {/* Delete Success Message */}
+      {deleteSuccess && (
         <div className="alert alert-success">
-          {success}
+          {deleteSuccess}
+        </div>
+      )}
+
+      {/* Expense Result */}
+      {expense && !deleteSuccess && (
+        <div className="card shadow-sm">
+          <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 className="mb-0">Expense #{expense.id}</h3>
+            <button
+              className="btn btn-danger btn-sm"
+              onClick={handleDelete}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-1"></span>
+                  Deleting...
+                </>
+              ) : (
+                "Delete Expense"
+              )}
+            </button>
+          </div>
+          <div className="card-body">
+            <p><strong>Description:</strong> {expense.description}</p>
+            <p><strong>Amount:</strong> {formatCurrency(expense.amount)}</p>
+            <p><strong>Date:</strong> {formatDate(expense.date)}</p>
+            <p><strong>Property ID:</strong> 
+              <Link to={`/properties/${expense.propertyId}`} className="ms-1">
+                #{expense.propertyId}
+              </Link>
+            </p>
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default DeleteExpense;
+export default ExpenseLookupDelete;

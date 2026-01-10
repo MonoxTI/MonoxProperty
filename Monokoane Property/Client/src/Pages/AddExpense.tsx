@@ -1,24 +1,29 @@
 // src/components/AddExpense.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* =======================
-   Types (matched to your C# ExpenseDto)
+   Types
 ======================= */
+
+interface PropertyDto {
+  id: number;
+  propertyName: string;
+}
 
 interface ExpenseDto {
   id: number;
   propertyId: number;
   description: string;
-  amount: number; // maps to decimal in C#
-  date: string;   // ISO 8601 string
+  amount: number;
+  date: string;
 }
 
 interface CreateExpenseRequest {
   propertyId: number;
   description: string;
   amount: number;
-  date: string; // ISO string like "2025-01-05T10:30:00Z"
+  date: string; // ISO string
 }
 
 interface ApiErrorResponse {
@@ -30,30 +35,59 @@ interface ApiErrorResponse {
 const AddExpense: React.FC = () => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(""); // Will be YYYY-MM-DD from input
-  const [propertyId, setPropertyId] = useState("");
+  const [date, setDate] = useState("");
+  const [propertyId, setPropertyId] = useState<number | "">("");
 
+  // Lookup data
+  const [properties, setProperties] = useState<PropertyDto[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const navigate = useNavigate();
+
+  // Fetch properties on component mount
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const res = await fetch("http://localhost:5153/api/property", { headers });
+        const text = await res.text();
+
+        if (!res.ok) {
+          throw new Error("Failed to load properties");
+        }
+
+        const data = text.trim() ? JSON.parse(text) : [];
+        setProperties(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Fetch properties error:", err);
+        setError("Failed to load properties. Please refresh.");
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
 
-    const amountNum = parseFloat(amount);
-    const propertyIdNum = parseInt(propertyId, 10);
-
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setError("Amount must be a positive number");
+    if (propertyId === "") {
+      setError("Please select a property");
       return;
     }
 
-    if (isNaN(propertyIdNum) || propertyIdNum <= 0) {
-      setError("Valid Property ID is required");
+    const amountNum = parseFloat(amount);
+
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setError("Amount must be a positive number");
       return;
     }
 
@@ -62,12 +96,10 @@ const AddExpense: React.FC = () => {
       return;
     }
 
-    // Convert date to ISO string (UTC midnight for consistency)
-    // e.g. "2025-01-05" → "2025-01-05T00:00:00Z"
     const isoDate = new Date(date).toISOString();
 
     const payload: CreateExpenseRequest = {
-      propertyId: propertyIdNum,
+      propertyId: propertyId as number,
       description,
       amount: amountNum,
       date: isoDate,
@@ -117,10 +149,23 @@ const AddExpense: React.FC = () => {
     }
   };
 
+  if (isLoadingData) {
+    return (
+      <div className="container-fluid mt-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Loading properties...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-12 col-md-8 col-lg-6 col-xl-5">
+    <div className="container-fluid mt-5">
+      <div className="row">
+        <div className="col-12">
           <div className="card shadow-sm">
             <div className="card-body p-4">
               <h2 className="card-title text-center mb-4 fw-bold">Add New Expense</h2>
@@ -142,18 +187,22 @@ const AddExpense: React.FC = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label htmlFor="propertyId" className="form-label">
-                      Property ID
+                      Property
                     </label>
-                    <input
-                      type="number"
-                      className="form-control w-100"
+                    <select
+                      className="form-select w-100"
                       id="propertyId"
                       value={propertyId}
-                      onChange={(e) => setPropertyId(e.target.value)}
-                      min="1"
+                      onChange={(e) => setPropertyId(e.target.value ? Number(e.target.value) : "")}
                       required
-                      placeholder="e.g. 1, 2, 3..."
-                    />
+                    >
+                      <option value="">-- Select a property --</option>
+                      {properties.map((property) => (
+                        <option key={property.id} value={property.id}>
+                          {property.propertyName} (ID: {property.id})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="mb-3">
@@ -221,14 +270,6 @@ const AddExpense: React.FC = () => {
                     )}
                   </button>
                 </form>
-              )}
-
-              {!success && (
-                <div className="mt-3 text-center">
-                  <a href="/expenses" className="text-decoration-none">
-                    ← Back to Expenses
-                  </a>
-                </div>
               )}
             </div>
           </div>

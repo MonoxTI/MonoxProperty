@@ -33,6 +33,7 @@ namespace MonoxProperty.Controllers
             
         }
 
+        //Power bi integration endpoint
       [HttpGet("summary")]
       public async Task<IActionResult> GetSummary([FromQuery] int year, [FromQuery] int month)
       {

@@ -63,10 +63,10 @@ const Register: React.FC = () => {
   }
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-11 col-sm-10 col-md-8 col-lg-6 col-xl-5">
-          <div className="card shadow-sm w-100" style={{ maxWidth: '500px' }}>
+    <div className="container-fluid mt-5">
+      <div className="row">
+        <div className="col-12">
+          <div className="card shadow-sm">
             <div className="card-body p-4">
               <h2 className="card-title text-center mb-4 fw-bold">Register</h2>
 

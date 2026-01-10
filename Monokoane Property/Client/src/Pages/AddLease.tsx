@@ -1,20 +1,20 @@
 // src/components/AddLease.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* =======================
-   Types (aligned with C# LeaseDto)
+   Types
 ======================= */
 
-interface LeaseDto {
+interface PropertyDto {
   id: number;
-  propertyId: number;
-  tenantId: number;
-  start: string; // ISO date string
-  end: string;   // ISO date string
-  rent: number;
-  levy: number;
-  bond: number;
+  propertyName: string;
+}
+
+interface TenantDto {
+  id: number;
+  fullName: string;
+  email: string;
 }
 
 interface CreateLeaseRequest {
@@ -34,41 +34,81 @@ interface ApiErrorResponse {
 }
 
 const AddLease: React.FC = () => {
-  const [propertyId, setPropertyId] = useState("");
-  const [tenantId, setTenantId] = useState("");
+  // Form state
+  const [propertyId, setPropertyId] = useState<number | "">("");
+  const [tenantId, setTenantId] = useState<number | "">("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [rent, setRent] = useState("");
   const [levy, setLevy] = useState("");
   const [bond, setBond] = useState("");
 
+  // Lookup data
+  const [properties, setProperties] = useState<PropertyDto[]>([]);
+  const [tenants, setTenants] = useState<TenantDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const navigate = useNavigate();
+
+  // Fetch properties and tenants on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const [propertiesRes, tenantsRes] = await Promise.all([
+          fetch("http://localhost:5153/api/property", { headers }),
+          fetch("http://localhost:5153/api/tenant", { headers })
+        ]);
+
+        const [propertiesText, tenantsText] = await Promise.all([
+          propertiesRes.text(),
+          tenantsRes.text()
+        ]);
+
+        if (!propertiesRes.ok || !tenantsRes.ok) {
+          throw new Error("Failed to load lookup data");
+        }
+
+        const propertiesData = propertiesText.trim() ? JSON.parse(propertiesText) : [];
+        const tenantsData = tenantsText.trim() ? JSON.parse(tenantsText) : [];
+
+        setProperties(Array.isArray(propertiesData) ? propertiesData : []);
+        setTenants(Array.isArray(tenantsData) ? tenantsData : []);
+      } catch (err) {
+        console.error("Fetch lookup data error:", err);
+        setError("Failed to load properties or tenants. Please refresh.");
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
 
-    // Parse and validate numbers
-    const propertyIdNum = parseInt(propertyId, 10);
-    const tenantIdNum = parseInt(tenantId, 10);
+    // Validation
+    if (propertyId === "") {
+      setError("Please select a property");
+      return;
+    }
+
+    if (tenantId === "") {
+      setError("Please select a tenant");
+      return;
+    }
+
     const rentNum = parseFloat(rent);
     const levyNum = parseFloat(levy);
     const bondNum = parseFloat(bond);
-
-    if (isNaN(propertyIdNum) || propertyIdNum <= 0) {
-      setError("Valid Property ID is required");
-      return;
-    }
-
-    if (isNaN(tenantIdNum) || tenantIdNum <= 0) {
-      setError("Valid Tenant ID is required");
-      return;
-    }
 
     if (isNaN(rentNum) || rentNum <= 0) {
       setError("Rent must be a positive amount");
@@ -100,13 +140,13 @@ const AddLease: React.FC = () => {
       return;
     }
 
-    // Convert dates to ISO strings (UTC midnight)
+    // Convert dates to ISO strings
     const startIso = new Date(start).toISOString();
     const endIso = new Date(end).toISOString();
 
     const payload: CreateLeaseRequest = {
-      propertyId: propertyIdNum,
-      tenantId: tenantIdNum,
+      propertyId: propertyId as number,
+      tenantId: tenantId as number,
       start: startIso,
       end: endIso,
       rent: rentNum,
@@ -158,10 +198,23 @@ const AddLease: React.FC = () => {
     }
   };
 
+  if (isLoadingData) {
+    return (
+      <div className="container-fluid mt-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Loading properties and tenants...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-12 col-md-8 col-lg-6 col-xl-5">
+    <div className="container-fluid mt-5">
+      <div className="row">
+        <div className="col-12">
           <div className="card shadow-sm">
             <div className="card-body p-4">
               <h2 className="card-title text-center mb-4 fw-bold">Add New Lease</h2>
@@ -183,34 +236,42 @@ const AddLease: React.FC = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label htmlFor="propertyId" className="form-label">
-                      Property ID
+                      Property
                     </label>
-                    <input
-                      type="number"
-                      className="form-control w-100"
+                    <select
+                      className="form-select w-100"
                       id="propertyId"
                       value={propertyId}
-                      onChange={(e) => setPropertyId(e.target.value)}
-                      min="1"
+                      onChange={(e) => setPropertyId(e.target.value ? Number(e.target.value) : "")}
                       required
-                      placeholder="e.g. 1, 2, 3..."
-                    />
+                    >
+                      <option value="">-- Select a property --</option>
+                      {properties.map((prop) => (
+                        <option key={prop.id} value={prop.id}>
+                          {prop.propertyName} (ID: {prop.id})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="mb-3">
                     <label htmlFor="tenantId" className="form-label">
-                      Tenant ID
+                      Tenant
                     </label>
-                    <input
-                      type="number"
-                      className="form-control w-100"
+                    <select
+                      className="form-select w-100"
                       id="tenantId"
                       value={tenantId}
-                      onChange={(e) => setTenantId(e.target.value)}
-                      min="1"
+                      onChange={(e) => setTenantId(e.target.value ? Number(e.target.value) : "")}
                       required
-                      placeholder="e.g. 101, 102..."
-                    />
+                    >
+                      <option value="">-- Select a tenant --</option>
+                      {tenants.map((tenant) => (
+                        <option key={tenant.id} value={tenant.id}>
+                          {tenant.fullName} (ID: {tenant.id})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="mb-3">
@@ -304,21 +365,13 @@ const AddLease: React.FC = () => {
                           role="status"
                           aria-hidden="true"
                         ></span>
-                        Saving...
+                        Creating Lease...
                       </>
                     ) : (
                       "Create Lease"
                     )}
                   </button>
                 </form>
-              )}
-
-              {!success && (
-                <div className="mt-3 text-center">
-                  <a href="/leases" className="text-decoration-none">
-                    ← Back to Leases
-                  </a>
-                </div>
               )}
             </div>
           </div>

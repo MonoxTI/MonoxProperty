@@ -1,44 +1,44 @@
-// src/components/DeleteProperty.tsx
+// src/components/PropertyLookupDelete.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-const DeleteProperty: React.FC = () => {
-  const [propertyId, setPropertyId] = useState<string>("");
+// Match your C# PropertyDto
+interface PropertyDto {
+  id: number;
+  propertyName: string;
+  location: string;
+  apartments: boolean;
+  units: number;
+  occupied: boolean;
+  leases: any[];
+  expenses: any[];
+}
+
+const PropertyLookupDelete: React.FC = () => {
+  const [searchName, setSearchName] = useState<string>("");
+  const [property, setProperty] = useState<PropertyDto | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showConfirm, setShowConfirm] = useState<boolean>(false);
-  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
-  const navigate = useNavigate();
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const idNum = Number(propertyId.trim());
-    if (!idNum || idNum <= 0 || !Number.isInteger(idNum)) {
-      setError("Please enter a valid property ID (positive whole number)");
+    if (!searchName.trim()) {
+      setError("Please enter a property name");
       return;
     }
 
-    setError(null);
-    setSuccess(null);
-    setShowConfirm(true);
-    setConfirmId(idNum);
-  };
-
-  const handleDelete = async () => {
-    if (confirmId === null) return;
-
     setLoading(true);
     setError(null);
-    setSuccess(null);
+    setProperty(null);
+    setDeleteSuccess(null);
 
     try {
       const token = localStorage.getItem("token");
       
-      const response = await fetch(`http://localhost:5153/api/property/${confirmId}`, {
-        method: "DELETE",
+      const response = await fetch(`http://localhost:5153/api/property/byname?name=${encodeURIComponent(searchName)}`, {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
         }
@@ -49,7 +49,41 @@ const DeleteProperty: React.FC = () => {
       }
 
       if (!response.ok) {
-        // Try to get error message from backend
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setProperty(data as PropertyDto);
+    } catch (err: any) {
+      console.error("Search error:", err);
+      setError(err.message || "Failed to fetch property");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!property) return;
+
+    if (!window.confirm(`Are you sure you want to delete "${property.propertyName}"? This cannot be undone and may affect leases and expenses.`)) {
+      return;
+    }
+
+    setDeleteLoading(true);
+    setError(null);
+    setDeleteSuccess(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`http://localhost:5153/api/property/${property.id}`, {
+        method: "DELETE",
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        }
+      });
+
+      if (!response.ok) {
         const text = await response.text();
         let message = `Failed to delete property (${response.status})`;
         try {
@@ -63,86 +97,40 @@ const DeleteProperty: React.FC = () => {
         throw new Error(message);
       }
 
-      setSuccess(`Property #${confirmId} has been deleted successfully.`);
-      setPropertyId("");
-      setShowConfirm(false);
-      setConfirmId(null);
-
-      // Optional: redirect after 2 seconds
-      setTimeout(() => navigate("/properties"), 2000);
+      setDeleteSuccess(`Property "${property.propertyName}" has been deleted successfully.`);
+      setProperty(null);
+      setSearchName("");
     } catch (err: any) {
       console.error("Delete error:", err);
       setError(err.message || "Failed to delete property");
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    setShowConfirm(false);
-    setConfirmId(null);
-    setPropertyId("");
   };
 
   return (
     <div className="container mt-4">
-      <h2 className="mb-4">Delete Property by ID</h2>
+      <h2 className="mb-4">Property Lookup & Delete</h2>
       
-      {!showConfirm ? (
-        <form onSubmit={handleSearch} className="mb-4">
-          <div className="input-group">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Enter property ID to delete (e.g., 1, 2, 3...)"
-              value={propertyId}
-              onChange={(e) => setPropertyId(e.target.value)}
-              min="1"
-              disabled={loading}
-            />
-            <button 
-              className="btn btn-danger" 
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Searching..." : "Delete"}
-            </button>
-          </div>
-        </form>
-      ) : (
-        <div className="mb-4">
-          <div className="alert alert-warning">
-            <h5 className="alert-heading">⚠️ Confirm Deletion</h5>
-            <p>
-              Are you sure you want to delete <strong>Property #{confirmId}</strong>?
-              This action <strong>cannot be undone</strong> and may affect associated leases and expenses.
-            </p>
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-danger"
-                onClick={handleDelete}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Deleting...
-                  </>
-                ) : (
-                  "Yes, Delete"
-                )}
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      <form onSubmit={handleSearch} className="mb-4">
+        <div className="input-group">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Enter property name (e.g., Montana Plaza)"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            disabled={loading || deleteLoading}
+          />
+          <button 
+            className="btn btn-primary" 
+            type="submit"
+            disabled={loading || deleteLoading}
+          >
+            {loading ? "Searching..." : "Search"}
+          </button>
         </div>
-      )}
+      </form>
 
       {/* Error Message */}
       {error && (
@@ -151,14 +139,54 @@ const DeleteProperty: React.FC = () => {
         </div>
       )}
 
-      {/* Success Message */}
-      {success && (
+      {/* Delete Success Message */}
+      {deleteSuccess && (
         <div className="alert alert-success">
-          {success}
+          {deleteSuccess}
+        </div>
+      )}
+
+      {/* Property Result */}
+      {property && !deleteSuccess && (
+        <div className="card shadow-sm">
+          <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 className="mb-0">{property.propertyName}</h3>
+            <button
+              className="btn btn-danger btn-sm"
+              onClick={handleDelete}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-1"></span>
+                  Deleting...
+                </>
+              ) : (
+                "Delete Property"
+              )}
+            </button>
+          </div>
+          <div className="card-body">
+            <p><strong>Location:</strong> {property.location}</p>
+            <p><strong>Units:</strong> {property.units}</p>
+            <p><strong>Type:</strong> {property.apartments ? "Apartments" : "Single Unit"}</p>
+            <p><strong>Status:</strong> 
+              <span className={`badge ms-2 ${property.occupied ? "bg-success" : "bg-warning"}`}>
+                {property.occupied ? "Occupied" : "Vacant"}
+              </span>
+            </p>
+            
+            <div className="mt-3 pt-3 border-top">
+              <small className="text-muted">
+                Leases: {property.leases?.length || 0} | 
+                Expenses: {property.expenses?.length || 0}
+              </small>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default DeleteProperty;
+export default PropertyLookupDelete;
