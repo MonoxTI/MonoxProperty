@@ -37,7 +37,7 @@ const Login: React.FC = () => {
       }
 
       // Assuming successful login → redirect to dashboard or home
-      navigate('/');
+      navigate('/home');
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
     } finally {

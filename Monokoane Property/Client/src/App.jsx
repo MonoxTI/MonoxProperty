@@ -15,6 +15,7 @@ import TenantLookupDelete from './Pages/GetTenant.tsx'
 import PropertyLookupDelete from './Pages/DeleteProp.tsx'
 import ExpenseLookupDelete from './Pages/DeleteExpense.tsx'
 import RecordPayment from './Pages/Monthly.tsx'
+import HomeDashboard from './Pages/Home.tsx'
 
 function Header(){
   return (
@@ -27,7 +28,7 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path='/' element={<Header/>}/>
+        
         <Route path='/add-property' element={<Prop/>}/>{/* Done */}
         <Route path='/add-expense' element={<AddExpense/>}/>{/* Done */}
         <Route path='/add-lease' element={<AddLease/>}/>{/* Done */}
@@ -42,6 +43,7 @@ function App() {
         <Route path='/register' element={<Register/>}/>{/* Done */}
         <Route path='/login' element={<Login/>}/>{/* Done */}
         <Route path='/add-rent-payment' element={<RecordPayment/>}/>{/* Done */}
+        <Route path='/home' element={<HomeDashboard/>}/>{/* Done */}
       </Routes>
     </>
   )
