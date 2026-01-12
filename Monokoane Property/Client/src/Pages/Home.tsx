@@ -1,8 +1,9 @@
 // src/components/HomeDashboard.tsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext.tsx';
+import Navigation from '../Nav.tsx';
 
-// Match your C# DTOs
 interface PropertyDto {
   id: number;
   propertyName: string;
@@ -31,6 +32,9 @@ interface SummaryDto {
 }
 
 const HomeDashboard: React.FC = () => {
+  const { token, logout, loading: authLoading } = useAuth(); 
+  const navigate = useNavigate();
+  
   // State for all data
   const [properties, setProperties] = useState<PropertyDto[]>([]);
   const [tenants, setTenants] = useState<TenantDto[]>([]);
@@ -47,10 +51,28 @@ const HomeDashboard: React.FC = () => {
 
   // Fetch all data in parallel
   useEffect(() => {
+    // If auth system is still initializing, wait
+    if (authLoading) return;
+
+    // If no token, redirect to login
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const headers = {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json'
+        };
+
+        console.log('Making API calls...');
+
+        // Get current year and month for summary
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
 
         // Fetch all endpoints concurrently
         const [
@@ -61,15 +83,29 @@ const HomeDashboard: React.FC = () => {
         ] = await Promise.all([
           fetch('http://localhost:5153/api/property', { headers }),
           fetch('http://localhost:5153/api/tenant', { headers }),
-          fetch('http://localhost:5153/api/lease/active', { headers }),
-          fetch('http://localhost:5153/api/report/property', { headers })
+          fetch('http://localhost:5153/api/lease', { headers }),
+          fetch(`http://localhost:5153/api/pay/summary?year=${currentYear}&month=${currentMonth}`, { 
+            headers 
+          })
         ]);
+
+        // Check for 401 (Unauthorized)
+        if (propertiesRes.status === 401 || tenantsRes.status === 401 || 
+            leasesRes.status === 401 || summaryRes.status === 401) {
+          console.error('Got 401 response - Unauthorized');
+          setError('Authentication failed. Your session may have expired.');
+          logout(); // 👈 Automatically logs out and redirects to /login
+          return;
+        }
 
         // Handle properties
         if (propertiesRes.ok) {
           const propertiesText = await propertiesRes.text();
           const propertiesData = propertiesText.trim() ? JSON.parse(propertiesText) : [];
           setProperties(Array.isArray(propertiesData) ? propertiesData : []);
+          console.log('Properties loaded:', propertiesData.length);
+        } else {
+          console.error('Properties fetch failed:', propertiesRes.status, propertiesRes.statusText);
         }
         setLoadingProperties(false);
 
@@ -78,6 +114,9 @@ const HomeDashboard: React.FC = () => {
           const tenantsText = await tenantsRes.text();
           const tenantsData = tenantsText.trim() ? JSON.parse(tenantsText) : [];
           setTenants(Array.isArray(tenantsData) ? tenantsData : []);
+          console.log('Tenants loaded:', tenantsData.length);
+        } else {
+          console.error('Tenants fetch failed:', tenantsRes.status, tenantsRes.statusText);
         }
         setLoadingTenants(false);
 
@@ -86,6 +125,9 @@ const HomeDashboard: React.FC = () => {
           const leasesText = await leasesRes.text();
           const leasesData = leasesText.trim() ? JSON.parse(leasesText) : [];
           setLeases(Array.isArray(leasesData) ? leasesData : []);
+          console.log('Leases loaded:', leasesData.length);
+        } else {
+          console.error('Leases fetch failed:', leasesRes.status, leasesRes.statusText);
         }
         setLoadingLeases(false);
 
@@ -95,17 +137,20 @@ const HomeDashboard: React.FC = () => {
           if (summaryText.trim()) {
             const summaryData = JSON.parse(summaryText);
             setSummary(summaryData as SummaryDto);
+            console.log('Summary loaded:', summaryData);
           }
+        } else {
+          console.error('Summary fetch failed:', summaryRes.status, summaryRes.statusText);
         }
         setLoadingSummary(false);
 
         // Check for any errors
         if (!propertiesRes.ok || !tenantsRes.ok || !leasesRes.ok || !summaryRes.ok) {
-          setError('Some data failed to load. Please refresh.');
+          setError('Some data failed to load. Please refresh the page.');
         }
       } catch (err) {
         console.error('Dashboard fetch error:', err);
-        setError('Failed to load dashboard data. Please try again later.');
+        setError('Failed to connect to the server. Please check your connection.');
         setLoadingProperties(false);
         setLoadingTenants(false);
         setLoadingLeases(false);
@@ -114,7 +159,7 @@ const HomeDashboard: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [token, authLoading, navigate, logout]); // 👈 Dependencies
 
   // Format currency as R1,234.50
   const formatCurrency = (amount: number): string => {
@@ -134,23 +179,28 @@ const HomeDashboard: React.FC = () => {
     return months[monthIndex - 1] || 'Unknown';
   };
 
+  // Show loading while auth system initializes
+  if (authLoading) {
+    return (
+      <div className="container-fluid py-5 text-center">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2">Checking authentication...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container-fluid py-3" style={{ maxWidth: '1400px' }}>
       {/* Header */}
+      <Navigation/>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="mb-0">Dashboard</h4>
         <span className="badge bg-secondary">
           {summary && `${getMonthName(summary.month)} ${summary.year}`}
         </span>
       </div>
-
-      {/* Error Alert */}
-      {error && (
-        <div className="alert alert-warning alert-dismissible fade show py-2 mb-3" role="alert">
-          <small>{error}</small>
-          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
-        </div>
-      )}
 
       {/* Stats Cards Row */}
       <div className="row g-3 mb-3">
@@ -175,7 +225,7 @@ const HomeDashboard: React.FC = () => {
             <div className="card-body p-3">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <div className="opacity-75 small">Active Tenants</div>
+                  <div className="opacity-75 small">Tenants</div>
                   <h3 className="mb-0 mt-1">{loadingTenants ? '...' : tenants.length}</h3>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="opacity-50" viewBox="0 0 16 16">
@@ -191,7 +241,7 @@ const HomeDashboard: React.FC = () => {
             <div className="card-body p-3">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <div className="opacity-75 small">Active Leases</div>
+                  <div className="opacity-75 small">Leases</div>
                   <h3 className="mb-0 mt-1">{loadingLeases ? '...' : leases.length}</h3>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="opacity-50" viewBox="0 0 16 16">
@@ -229,7 +279,7 @@ const HomeDashboard: React.FC = () => {
           <div className="card shadow-sm">
             <div className="card-header bg-white d-flex justify-content-between align-items-center py-2">
               <h6 className="mb-0">Properties ({properties.length})</h6>
-              <Link to="/properties/add" className="btn btn-sm btn-primary">
+              <Link to="/add-property" className="btn btn-sm btn-primary">
                 + Add
               </Link>
             </div>
@@ -335,13 +385,13 @@ const HomeDashboard: React.FC = () => {
       {/* Quick Actions */}
       <div className="mt-3 p-3 bg-light rounded">
         <div className="d-flex gap-3 justify-content-center">
-          <Link to="/leases/record" className="btn btn-outline-primary btn-sm">
+          <Link to="/add-rent-payment" className="btn btn-outline-primary btn-sm">
             📝 Record Payment
           </Link>
-          <Link to="/expenses/add" className="btn btn-outline-primary btn-sm">
+          <Link to="/add-expense" className="btn btn-outline-primary btn-sm">
             💰 Add Expense
           </Link>
-          <Link to="/leases/add" className="btn btn-outline-primary btn-sm">
+          <Link to="/add-lease" className="btn btn-outline-primary btn-sm">
             📄 Create Lease
           </Link>
         </div>

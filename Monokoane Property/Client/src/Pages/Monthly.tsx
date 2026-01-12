@@ -1,6 +1,7 @@
 // src/components/RecordPayment.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Navigation from '../Nav.tsx';
 
 /* =======================
    Types (aligned with your C# Dto)
@@ -9,9 +10,9 @@ import { useNavigate } from "react-router-dom";
 interface LeaseDto {
   id: number;
   propertyId: number;
-  propertyName: string; // Added for display
+  propertyName: string;
   tenantId: number;
-  tenantName: string;   // Added for display
+  tenantName: string;
   rent: number;
 }
 
@@ -48,22 +49,46 @@ const RecordPayment: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // Fetch active leases on mount
+  // Fetch leases with property/tenant names
   useEffect(() => {
-    const fetchLeases = async () => {
+    const fetchLeasesWithDetails = async () => {
       try {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const res = await fetch("http://localhost:5153/api/lease/active", { headers });
-        const text = await res.text();
+        // Fetch all required data in parallel
+        const [leasesRes, propertiesRes, tenantsRes] = await Promise.all([
+          fetch("http://localhost:5153/api/lease", { headers }),
+          fetch("http://localhost:5153/api/property", { headers }),
+          fetch("http://localhost:5153/api/tenant", { headers })
+        ]);
 
-        if (!res.ok) {
-          throw new Error("Failed to load leases");
+        if (!leasesRes.ok || !propertiesRes.ok || !tenantsRes.ok) {
+          throw new Error("Failed to load lease data");
         }
 
-        const data = text.trim() ? JSON.parse(text) : [];
-        setLeases(Array.isArray(data) ? data : []);
+        const [leasesData, propertiesData, tenantsData] = await Promise.all([
+          leasesRes.json(),
+          propertiesRes.json(),
+          tenantsRes.json()
+        ]);
+
+        // Create lookup maps for quick access
+        const propertyMap = new Map(
+          propertiesData.map(p => [p.id, p.propertyName])
+        );
+        const tenantMap = new Map(
+          tenantsData.map(t => [t.id, t.fullName])
+        );
+
+        // Enrich leases with names
+        const enrichedLeases = leasesData.map(lease => ({
+          ...lease,
+          propertyName: propertyMap.get(lease.propertyId) || `Property #${lease.propertyId}`,
+          tenantName: tenantMap.get(lease.tenantId) || `Tenant #${lease.tenantId}`
+        }));
+
+        setLeases(enrichedLeases);
       } catch (err) {
         console.error("Fetch leases error:", err);
         setError("Failed to load leases. Please refresh.");
@@ -72,7 +97,7 @@ const RecordPayment: React.FC = () => {
       }
     };
 
-    fetchLeases();
+    fetchLeasesWithDetails();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,17 +166,6 @@ const RecordPayment: React.FC = () => {
     }
   };
 
-  // Get payment type label
-  const getPaymentTypeLabel = (type: PaymentType): string => {
-    switch (type) {
-      case PaymentType.Rent: return "Rent";
-      case PaymentType.Levy: return "Levy";
-      case PaymentType.Bond: return "Bond";
-      case PaymentType.Other: return "Other";
-      default: return "Unknown";
-    }
-  };
-
   if (isLoadingData) {
     return (
       <div className="container mt-5">
@@ -167,6 +181,7 @@ const RecordPayment: React.FC = () => {
 
   return (
     <div className="container-fluid mt-5">
+      <Navigation />
       <div className="row">
         <div className="col-12">
           <div className="card shadow-sm">

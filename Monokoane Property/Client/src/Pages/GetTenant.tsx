@@ -1,5 +1,7 @@
-// src/components/TenantLookupDelete.tsx
-import React, { useState } from 'react';
+// src/components/TenantsManagement.tsx
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import Navigation from '../Nav.tsx';
 
 interface Tenant {
   id: number;
@@ -8,25 +10,82 @@ interface Tenant {
   phoneNumber: string;
 }
 
-const TenantLookupDelete: React.FC = () => {
+const TenantsManagement: React.FC = () => {
+  // State for All Tenants
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loadingTenants, setLoadingTenants] = useState(true);
+  const [errorTenants, setErrorTenants] = useState<string | null>(null);
+
+  // State for Lookup & Delete
   const [tenantId, setTenantId] = useState<string>('');
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorSearch, setErrorSearch] = useState<string | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
+  // Fetch all tenants on mount
+  useEffect(() => {
+    const fetchTenants = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        const res = await fetch('http://localhost:5153/api/tenant', {
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        });
+
+        const text = await res.text();
+
+        if (!res.ok) {
+          let errorMessage = `Failed to load tenants (${res.status})`;
+          try {
+            if (text.trim()) {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorData.title || errorMessage;
+            }
+          } catch {
+            console.warn('Non-JSON error response:', text.substring(0, 200));
+            errorMessage = `Server error: ${res.status} ${res.statusText || ''}`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        if (!text.trim()) {
+          setTenants([]);
+          return;
+        }
+
+        const data = JSON.parse(text) as Tenant[];
+        setTenants(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Fetch tenants error:', err);
+        setErrorTenants(
+          err instanceof Error
+            ? err.message
+            : 'An unexpected error occurred while loading tenants.'
+        );
+      } finally {
+        setLoadingTenants(false);
+      }
+    };
+
+    fetchTenants();
+  }, []);
+
+  // Handle tenant search
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const id = Number(tenantId);
     if (isNaN(id) || id <= 0) {
-      setError('Please enter a valid tenant ID (number > 0)');
+      setErrorSearch('Please enter a valid tenant ID (number > 0)');
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    setLoadingSearch(true);
+    setErrorSearch(null);
     setTenant(null);
     setDeleteSuccess(null);
 
@@ -50,12 +109,13 @@ const TenantLookupDelete: React.FC = () => {
       setTenant(data as Tenant);
     } catch (err: any) {
       console.error('Tenant fetch error:', err);
-      setError(err.message || 'Failed to load tenant');
+      setErrorSearch(err.message || 'Failed to load tenant');
     } finally {
-      setLoading(false);
+      setLoadingSearch(false);
     }
   };
 
+  // Handle tenant delete
   const handleDelete = async () => {
     if (!tenant) return;
 
@@ -64,7 +124,7 @@ const TenantLookupDelete: React.FC = () => {
     }
 
     setDeleteLoading(true);
-    setError(null);
+    setErrorSearch(null);
     setDeleteSuccess(null);
 
     try {
@@ -99,128 +159,196 @@ const TenantLookupDelete: React.FC = () => {
       setDeleteSuccess(`Tenant "${tenant.fullName}" has been deleted successfully.`);
       setTenant(null);
       setTenantId("");
+      
+      // Refresh tenants list after delete
+      setTimeout(() => {
+        const fetchTenants = async () => {
+          try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5153/api/tenant', {
+              headers: {
+                ...(token && { Authorization: `Bearer ${token}` }),
+              },
+            });
+            const text = await res.text();
+            if (res.ok && text.trim()) {
+              const data = JSON.parse(text) as Tenant[];
+              setTenants(Array.isArray(data) ? data : []);
+            }
+          } catch (err) {
+            console.error('Refresh tenants error:', err);
+          }
+        };
+        fetchTenants();
+      }, 1000);
     } catch (err: any) {
       console.error('Delete error:', err);
-      setError(err.message || 'Failed to delete tenant. The tenant may have active leases.');
+      setErrorSearch(err.message || 'Failed to delete tenant. The tenant may have active leases.');
     } finally {
       setDeleteLoading(false);
     }
   };
 
-  // Format South African phone number: +27 82 123 4567 or 082 123 4567
+  // Format South African phone number
   const formatPhoneNumber = (phone: string): string => {
-    // Remove all non-digit characters (keep +)
     let cleaned = phone.replace(/[^\d+]/g, '');
-
-    // If starts with +27, format as +27 XX XXX XXXX
     if (cleaned.startsWith('+27') && cleaned.length === 12) {
       return `+27 ${cleaned.slice(3, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(8)}`;
     }
-    // If starts with 0 and 10 digits, format as 0XX XXX XXXX
     if (cleaned.startsWith('0') && cleaned.length === 10) {
       return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
     }
-    // Fallback: just clean spacing
     return phone.replace(/(\d{3})(\d)/, '$1 $2').replace(/(\d{3})(\d)/, '$1 $2');
   };
 
   return (
-    <div className="container py-4" style={{ maxWidth: '600px' }}>
-      <div className="card shadow-sm">
-        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h2 className="mb-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" 
-              className="bi bi-search me-2" viewBox="0 0 16 16">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-            </svg>
-            Tenant Lookup & Delete
-          </h2>
+    <div className="container mt-4">
+      <Navigation />
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-0">Tenant Management</h2>
+        <Link to="/tenants/add" className="btn btn-primary">
+          Add Tenant
+        </Link>
+      </div>
+
+      <div className="row g-4">
+        {/* Left Card: All Tenants Table */}
+        <div className="col-12 col-lg-8">
+          <div className="card shadow-sm h-100">
+            <div className="card-header bg-white py-3">
+              <h5 className="mb-0">All Tenants ({tenants.length})</h5>
+            </div>
+            <div className="card-body p-0">
+              {errorTenants && (
+                <div className="alert alert-danger m-3" role="alert">
+                  {errorTenants}
+                </div>
+              )}
+
+              {loadingTenants ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-2">Loading tenants...</p>
+                </div>
+              ) : (
+                <>
+                  {tenants.length === 0 ? (
+                    <div className="text-center py-5">
+                      <div className="mb-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="64"
+                          height="64"
+                          fill="currentColor"
+                          className="bi bi-person text-muted"
+                          viewBox="0 0 16 16"
+                        >
+                          <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 0 4Zm-1-.004c-.001-.246-.154-.487-.407-.636C10.876 11.225 10.395 11 10 11c-.4 0-.8.2-.972.5h-.028a.5.5 0 0 1-.5-.5Z" />
+                        </svg>
+                      </div>
+                      <p className="mb-3">No tenants found.</p>
+                      <Link to="/tenants/add" className="btn btn-primary">
+                        Add Your First Tenant
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-hover mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tenants.map((tenant) => (
+                            <tr key={tenant.id} className="align-middle">
+                              <td>#{tenant.id}</td>
+                              <td>
+                                <Link to={`/tenants/${tenant.id}`} className="text-decoration-none">
+                                  {tenant.fullName}
+                                </Link>
+                              </td>
+                              <td>
+                                <a href={`mailto:${tenant.email}`} className="text-decoration-none">
+                                  {tenant.email}
+                                </a>
+                              </td>
+                              <td>
+                                <a href={`tel:${tenant.phoneNumber}`} className="text-decoration-none">
+                                  {formatPhoneNumber(tenant.phoneNumber)}
+                                </a>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="card-body">
-          {/* Search Form */}
-          <form onSubmit={handleSearch} className="mb-4">
-            <div className="input-group">
-              <input
-                type="number"
-                className="form-control"
-                placeholder="Enter tenant ID (e.g., 1, 5, 12)"
-                value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
-                min="1"
-                disabled={loading || deleteLoading}
-                required
-              />
-              <button 
-                className="btn btn-primary" 
-                type="submit"
-                disabled={loading || deleteLoading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Searching...
-                  </>
-                ) : (
-                  'Search Tenant'
-                )}
-              </button>
-            </div>
-            <div className="form-text">
-              Enter the tenant ID to view details and delete
-            </div>
-          </form>
 
-          {/* Error Message */}
-          {error && (
-            <div className="alert alert-danger alert-dismissible fade show">
-              <div className="d-flex">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" 
-                  className="bi bi-exclamation-triangle me-2" viewBox="0 0 16 16">
-                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06A.129.129 0 0 1 15 13.999a.135.135 0 0 1-.002-.017-.145.145 0 0 1-.023-.036.148.148 0 0 1-.024-.037c-.054-.116-.116-.224-.184-.327a.17.17 0 0 1-.002-.184l.001-.002z"/>
-                  <path d="M8 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-                </svg>
-                <div>{error}</div>
-              </div>
-              <button 
-                type="button" 
-                className="btn-close" 
-                onClick={() => setError(null)}
-              ></button>
+        {/* Right Card: Lookup & Delete */}
+        <div className="col-12 col-lg-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-header bg-white py-3">
+              <h5 className="mb-0">Find & Delete Tenant</h5>
             </div>
-          )}
+            <div className="card-body">
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="input-group">
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Enter tenant ID"
+                    value={tenantId}
+                    onChange={(e) => setTenantId(e.target.value)}
+                    min="1"
+                    disabled={loadingSearch || deleteLoading}
+                    required
+                  />
+                  <button 
+                    className="btn btn-primary"
+                    type="submit"
+                    disabled={loadingSearch || deleteLoading}
+                  >
+                    {loadingSearch ? "Searching..." : "Search"}
+                  </button>
+                </div>
+              </form>
 
-          {/* Delete Success Message */}
-          {deleteSuccess && (
-            <div className="alert alert-success alert-dismissible fade show">
-              <div className="d-flex align-items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" 
-                  className="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
-                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06l2.094 2.093a.75.75 0 0 0 1.06 0l3.71-3.71a.75.75 0 0 0-.022-1.08z"/>
-                </svg>
-                <div>{deleteSuccess}</div>
-              </div>
-              <button 
-                type="button" 
-                className="btn-close" 
-                onClick={() => setDeleteSuccess(null)}
-              ></button>
-            </div>
-          )}
+              {/* Search Error */}
+              {errorSearch && (
+                <div className="alert alert-danger" role="alert">
+                  {errorSearch}
+                </div>
+              )}
 
-          {/* Tenant Details */}
-          {tenant && !deleteSuccess && (
-            <div className="mt-4">
-              <h3 className="mb-3 text-center">Tenant Details</h3>
-              <div className="card">
-                <div className="card-body">
+              {/* Delete Success */}
+              {deleteSuccess && (
+                <div className="alert alert-success" role="alert">
+                  {deleteSuccess}
+                </div>
+              )}
+
+              {/* Tenant Details */}
+              {tenant && !deleteSuccess && (
+                <div className="border rounded p-3">
                   <div className="text-center mb-3">
                     <div className="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
-                      style={{ width: '80px', height: '80px', fontSize: '32px' }}>
+                      style={{ width: '60px', height: '60px', fontSize: '24px' }}>
                       {tenant.fullName.charAt(0).toUpperCase()}
                     </div>
                   </div>
                   
-                  <div className="row g-3">
+                  <div className="row g-2">
                     <div className="col-12">
                       <div className="d-flex justify-content-between">
                         <strong>ID:</strong>
@@ -230,7 +358,7 @@ const TenantLookupDelete: React.FC = () => {
                     
                     <div className="col-12">
                       <div className="d-flex justify-content-between">
-                        <strong>Full Name:</strong>
+                        <strong>Name:</strong>
                         <span>{tenant.fullName}</span>
                       </div>
                     </div>
@@ -253,44 +381,40 @@ const TenantLookupDelete: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  <div className="mt-3 pt-2 border-top">
+                    <button
+                      className="btn btn-danger w-100"
+                      onClick={handleDelete}
+                      disabled={deleteLoading}
+                    >
+                      {deleteLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          Deleting...
+                        </>
+                      ) : (
+                        'Delete Tenant'
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Delete Button */}
-              <div className="mt-4 text-center">
-                <button
-                  className="btn btn-danger"
-                  onClick={handleDelete}
-                  disabled={deleteLoading}
-                >
-                  {deleteLoading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2"></span>
-                      Deleting Tenant...
-                    </>
-                  ) : (
-                    'Delete This Tenant'
-                  )}
-                </button>
-              </div>
+              {!tenant && !deleteSuccess && !errorSearch && (
+                <div className="text-center text-muted py-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" className="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                  </svg>
+                  <p className="mt-2 mb-0">Search for a tenant to manage</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-
-      <div className="mt-3 text-center text-muted small">
-        <p>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-            className="bi bi-info-circle me-1" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M8.93 6.588l-2.29.924L5.38 5.24a1 1 0 0 1 1.414-1.414l1.82 1.819 1.82-1.82a1 1 0 0 1 1.414 1.414L10.686 6.5l-1.756.702z"/>
-            <path d="M8.5 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-          </svg>
-          Click email/phone to contact • Action cannot be undone
-        </p>
       </div>
     </div>
   );
 };
 
-export default TenantLookupDelete;
+export default TenantsManagement;

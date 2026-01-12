@@ -1,6 +1,7 @@
 // src/components/AddExpense.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Navigation from '../Nav.tsx';
 
 /* =======================
    Types
@@ -164,6 +165,7 @@ const AddExpense: React.FC = () => {
 
   return (
     <div className="container-fluid mt-5">
+      <Navigation />
       <div className="row">
         <div className="col-12">
           <div className="card shadow-sm">

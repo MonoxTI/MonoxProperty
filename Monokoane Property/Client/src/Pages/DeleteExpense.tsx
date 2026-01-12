@@ -1,6 +1,7 @@
 // src/components/ExpenseLookupDelete.tsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import Navigation from '../Nav.tsx';
 
 // Match your C# ExpenseDto
 interface ExpenseDto {
@@ -123,6 +124,7 @@ const ExpenseLookupDelete: React.FC = () => {
 
   return (
     <div className="container mt-4">
+      <Navigation />
       <h2 className="mb-4">Expense Lookup & Delete</h2>
       
       <form onSubmit={handleSearch} className="mb-4">

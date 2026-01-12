@@ -1,6 +1,7 @@
 // src/components/AddLease.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Navigation from '../Nav.tsx';
 
 /* =======================
    Types
@@ -213,6 +214,7 @@ const AddLease: React.FC = () => {
 
   return (
     <div className="container-fluid mt-5">
+      <Navigation />
       <div className="row">
         <div className="col-12">
           <div className="card shadow-sm">

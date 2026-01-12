@@ -40,16 +40,25 @@ const AddProperty: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [response, setResponse] = useState<PropertyDto | null>(null);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setResponse(null);
 
+    // Validate units
     const unitsNum = Number(units);
     if (!Number.isInteger(unitsNum) || unitsNum < 1) {
       setError("Units must be a positive whole number");
+      return;
+    }
+
+    // Check for valid token BEFORE request
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to add a property");
+      setTimeout(() => navigate('/login'), 2000);
       return;
     }
 
@@ -61,8 +70,6 @@ const AddProperty: React.FC = () => {
       occupied,
     };
 
-    const token = localStorage.getItem("token");
-
     try {
       setLoading(true);
 
@@ -70,7 +77,7 @@ const AddProperty: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -93,25 +100,10 @@ const AddProperty: React.FC = () => {
         throw new Error(errorMessage);
       }
 
-      // Handle empty success response
-      if (!text.trim()) {
-        // If the API returns 200 with no body, assume success with minimal data
-        setResponse({
-          id: 0,
-          propertyName,
-          location,
-          units: unitsNum,
-          apartments,
-          occupied,
-          leases: [],
-          expenses: []
-        });
-        return;
-      }
+      // Success! Navigate back to home
+      console.log("Property created successfully");
+      navigate('/home');
 
-      // Parse JSON only if not empty
-      const data = JSON.parse(text) as PropertyDto;
-      setResponse(data);
     } catch (err) {
       console.error("Add property error:", err);
       setError(
@@ -125,120 +117,117 @@ const AddProperty: React.FC = () => {
   };
 
   return (
-    <div className="container-fluid mt-5">
-      <div className="row">
-        <div className="col-12">
-          <div className="card shadow-sm">
-            <div className="card-body p-4">
-              <h2 className="card-title text-center mb-4 fw-bold">Add New Property</h2>
+    <div className="container mt-5" style={{ maxWidth: '600px' }}>
+      <div className="card shadow">
+        <div className="card-body p-4">
+          <h2 className="card-title text-center mb-4">Add New Property</h2>
 
-              {error && (
-                <div className="alert alert-danger" role="alert">
-                  {error}
-                </div>
-              )}
-
-              {response && (
-                <div className="alert alert-success" role="alert">
-                  <h5 className="mb-2">Property Created Successfully!</h5>
-                  <p className="mb-0">
-                    <strong>{response.propertyName}</strong> has been added.
-                  </p>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label htmlFor="propertyName" className="form-label">Property Name</label>
-                  <input
-                    type="text"
-                    className="form-control w-100"
-                    id="propertyName"
-                    value={propertyName}
-                    onChange={(e) => setPropertyName(e.target.value)}
-                    required
-                    placeholder="e.g. Sunridge Apartments"
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="location" className="form-label">Location</label>
-                  <input
-                    type="text"
-                    className="form-control w-100"
-                    id="location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    required
-                    placeholder="e.g. Pretoria, Montana"
-                  />
-                </div>
-
-                <div className = "mb-3">
-                  <label htmlFor="units" className="form-label">Number of Units</label>
-                  <input
-                    type="number"
-                    className="form-control w-100"
-                    id="units"
-                    value={units}
-                    onChange={(e) => setUnits(e.target.value)}
-                    min="1"
-                    required
-                    placeholder="e.g. 12"
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <div className="form-check">
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id="apartments"
-                      checked={apartments}
-                      onChange={(e) => setApartments(e.target.checked)}
-                    />
-                    <label className="form-check-label" htmlFor="apartments">
-                      This is an apartment complex
-                    </label>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <div className="form-check">
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id="occupied"
-                      checked={occupied}
-                      onChange={(e) => setOccupied(e.target.checked)}
-                    />
-                    <label className="form-check-label" htmlFor="occupied">
-                      Mark as currently occupied
-                    </label>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100 py-2"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span
-                        className="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Saving...
-                    </>
-                  ) : (
-                    "Add Property"
-                  )}
-                </button>
-              </form>
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
             </div>
-          </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="propertyName" className="form-label">Property Name</label>
+              <input
+                type="text"
+                className="form-control"
+                id="propertyName"
+                value={propertyName}
+                onChange={(e) => setPropertyName(e.target.value)}
+                required
+                placeholder="e.g. Sunridge Apartments"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="location" className="form-label">Location</label>
+              <input
+                type="text"
+                className="form-control"
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                required
+                placeholder="e.g. Pretoria, Montana"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="units" className="form-label">Number of Units</label>
+              <input
+                type="number"
+                className="form-control"
+                id="units"
+                value={units}
+                onChange={(e) => setUnits(e.target.value)}
+                min="1"
+                required
+                placeholder="e.g. 12"
+              />
+            </div>
+
+            <div className="mb-3">
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="apartments"
+                  checked={apartments}
+                  onChange={(e) => setApartments(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="apartments">
+                  This is an apartment complex
+                </label>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="occupied"
+                  checked={occupied}
+                  onChange={(e) => setOccupied(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="occupied">
+                  Mark as currently occupied
+                </label>
+              </div>
+            </div>
+
+            <div className="d-flex gap-2">
+              <button
+                type="button"
+                className="btn btn-outline-secondary flex-fill"
+                onClick={() => navigate('/home')}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary flex-fill"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Saving...
+                  </>
+                ) : (
+                  "Add Property"
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

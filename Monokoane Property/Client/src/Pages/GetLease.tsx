@@ -1,8 +1,9 @@
-// src/components/LeaseLookupDelete.tsx
-import React, { useState } from 'react';
+// src/components/LeasesManagement.tsx
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import Navigation from '../Nav.tsx';
 
-// Match your C# LeaseDto
-interface Lease {
+interface LeaseDto {
   id: number;
   propertyId: number;
   tenantId: number;
@@ -13,25 +14,82 @@ interface Lease {
   bond: number;
 }
 
-const LeaseLookupDelete: React.FC = () => {
+const LeasesManagement: React.FC = () => {
+  // State for All Leases
+  const [leases, setLeases] = useState<LeaseDto[]>([]);
+  const [loadingLeases, setLoadingLeases] = useState(true);
+  const [errorLeases, setErrorLeases] = useState<string | null>(null);
+
+  // State for Lookup & Delete
   const [leaseId, setLeaseId] = useState<string>('');
-  const [lease, setLease] = useState<Lease | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [lease, setLease] = useState<LeaseDto | null>(null);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorSearch, setErrorSearch] = useState<string | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
+  // Fetch all leases on mount
+  useEffect(() => {
+    const fetchLeases = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        const res = await fetch('http://localhost:5153/api/lease', {
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        });
+
+        const text = await res.text();
+
+        if (!res.ok) {
+          let errorMessage = `Failed to load leases (${res.status})`;
+          try {
+            if (text.trim()) {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorData.title || errorMessage;
+            }
+          } catch {
+            console.warn('Non-JSON error response:', text.substring(0, 200));
+            errorMessage = `Server error: ${res.status} ${res.statusText || ''}`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        if (!text.trim()) {
+          setLeases([]);
+          return;
+        }
+
+        const data = JSON.parse(text) as LeaseDto[];
+        setLeases(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Fetch leases error:', err);
+        setErrorLeases(
+          err instanceof Error
+            ? err.message
+            : 'An unexpected error occurred while loading leases.'
+        );
+      } finally {
+        setLoadingLeases(false);
+      }
+    };
+
+    fetchLeases();
+  }, []);
+
+  // Handle lease search
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const id = Number(leaseId);
     if (isNaN(id) || id <= 0) {
-      setError('Please enter a valid lease ID (number > 0)');
+      setErrorSearch('Please enter a valid lease ID (number > 0)');
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    setLoadingSearch(true);
+    setErrorSearch(null);
     setLease(null);
     setDeleteSuccess(null);
 
@@ -52,15 +110,16 @@ const LeaseLookupDelete: React.FC = () => {
       }
 
       const data = await response.json();
-      setLease(data as Lease);
+      setLease(data as LeaseDto);
     } catch (err: any) {
       console.error('Lease fetch error:', err);
-      setError(err.message || 'Failed to load lease');
+      setErrorSearch(err.message || 'Failed to load lease');
     } finally {
-      setLoading(false);
+      setLoadingSearch(false);
     }
   };
 
+  // Handle lease delete
   const handleDelete = async () => {
     if (!lease) return;
 
@@ -69,7 +128,7 @@ const LeaseLookupDelete: React.FC = () => {
     }
 
     setDeleteLoading(true);
-    setError(null);
+    setErrorSearch(null);
     setDeleteSuccess(null);
 
     try {
@@ -104,185 +163,260 @@ const LeaseLookupDelete: React.FC = () => {
       setDeleteSuccess(`Lease #${lease.id} has been deleted successfully.`);
       setLease(null);
       setLeaseId("");
+      
+      // Refresh leases list after delete
+      setTimeout(() => {
+        const fetchLeases = async () => {
+          try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5153/api/lease', {
+              headers: {
+                ...(token && { Authorization: `Bearer ${token}` }),
+              },
+            });
+            const text = await res.text();
+            if (res.ok && text.trim()) {
+              const data = JSON.parse(text) as LeaseDto[];
+              setLeases(Array.isArray(data) ? data : []);
+            }
+          } catch (err) {
+            console.error('Refresh leases error:', err);
+          }
+        };
+        fetchLeases();
+      }, 1000);
     } catch (err: any) {
       console.error('Delete error:', err);
-      setError(err.message || 'Failed to delete lease');
+      setErrorSearch(err.message || 'Failed to delete lease');
     } finally {
       setDeleteLoading(false);
     }
   };
 
-  // Format dates to DD/MM/YYYY (South African format)
-  const formatDate = (isoDate: string) => {
-    return new Date(isoDate).toLocaleDateString('en-ZA');
+  // Format date as DD/MM/YYYY (South African format)
+  const formatDate = (isoString: string): string => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString('en-ZA');
+  };
+
+  // Format currency as R1,234.50
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR',
+      minimumFractionDigits: 2,
+    }).format(amount);
   };
 
   return (
-    <div className="container py-4" style={{ maxWidth: '700px' }}>
-      <div className="card shadow-sm">
-        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h2 className="mb-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" 
-              className="bi bi-search me-2" viewBox="0 0 16 16">
-              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-            </svg>
-            Lease Lookup & Delete
-          </h2>
+    <div className="container mt-4">
+      <Navigation />
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-0">Lease Management</h2>
+        <Link to="/leases/add" className="btn btn-primary">
+          Add Lease
+        </Link>
+      </div>
+
+      <div className="row g-4">
+        {/* Left Card: All Leases Table */}
+        <div className="col-12 col-lg-8">
+          <div className="card shadow-sm h-100">
+            <div className="card-header bg-white py-3">
+              <h5 className="mb-0">All Leases ({leases.length})</h5>
+            </div>
+            <div className="card-body p-0">
+              {errorLeases && (
+                <div className="alert alert-danger m-3" role="alert">
+                  {errorLeases}
+                </div>
+              )}
+
+              {loadingLeases ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-2">Loading leases...</p>
+                </div>
+              ) : (
+                <>
+                  {leases.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p className="mb-0">No leases found.</p>
+                      <Link to="/leases/add" className="btn btn-outline-primary mt-2">
+                        Create your first lease
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-hover mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Lease ID</th>
+                            <th>Property ID</th>
+                            <th>Tenant ID</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Rent</th>
+                            <th>Levy</th>
+                            <th>Bond</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {leases.map((lease) => (
+                            <tr key={lease.id}>
+                              <td>#{lease.id}</td>
+                              <td>#{lease.propertyId}</td>
+                              <td>#{lease.tenantId}</td>
+                              <td>{formatDate(lease.start)}</td>
+                              <td>{formatDate(lease.end)}</td>
+                              <td>{formatCurrency(lease.rent)}</td>
+                              <td>{formatCurrency(lease.levy)}</td>
+                              <td>{formatCurrency(lease.bond)}</td>
+                              <td>
+                                <Link
+                                  to={`/leases/${lease.id}`}
+                                  className="btn btn-sm btn-outline-secondary"
+                                >
+                                  View
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="card-body">
-          {/* Search Form */}
-          <form onSubmit={handleSearch} className="mb-4">
-            <div className="input-group">
-              <input
-                type="number"
-                className="form-control"
-                placeholder="Enter lease ID (e.g., 1, 5, 12)"
-                value={leaseId}
-                onChange={(e) => setLeaseId(e.target.value)}
-                min="1"
-                disabled={loading || deleteLoading}
-                required
-              />
-              <button 
-                className="btn btn-primary" 
-                type="submit"
-                disabled={loading || deleteLoading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Searching...
-                  </>
-                ) : (
-                  'Search Lease'
-                )}
-              </button>
-            </div>
-            <div className="form-text">
-              Enter the lease ID to view details and delete
-            </div>
-          </form>
 
-          {/* Error Message */}
-          {error && (
-            <div className="alert alert-danger alert-dismissible fade show">
-              <div className="d-flex">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" 
-                  className="bi bi-exclamation-triangle me-2" viewBox="0 0 16 16">
-                  <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06A.129.129 0 0 1 15 13.999a.135.135 0 0 1-.002-.017-.145.145 0 0 1-.023-.036.148.148 0 0 1-.024-.037c-.054-.116-.116-.224-.184-.327a.17.17 0 0 1-.002-.184l.001-.002z"/>
-                  <path d="M8 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-                </svg>
-                <div>{error}</div>
-              </div>
-              <button 
-                type="button" 
-                className="btn-close" 
-                onClick={() => setError(null)}
-              ></button>
+        {/* Right Card: Lookup & Delete */}
+        <div className="col-12 col-lg-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-header bg-white py-3">
+              <h5 className="mb-0">Find & Delete Lease</h5>
             </div>
-          )}
+            <div className="card-body">
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="input-group">
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Enter lease ID"
+                    value={leaseId}
+                    onChange={(e) => setLeaseId(e.target.value)}
+                    min="1"
+                    disabled={loadingSearch || deleteLoading}
+                    required
+                  />
+                  <button 
+                    className="btn btn-primary"
+                    type="submit"
+                    disabled={loadingSearch || deleteLoading}
+                  >
+                    {loadingSearch ? "Searching..." : "Search"}
+                  </button>
+                </div>
+              </form>
 
-          {/* Delete Success Message */}
-          {deleteSuccess && (
-            <div className="alert alert-success alert-dismissible fade show">
-              <div className="d-flex align-items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" 
-                  className="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
-                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06l2.094 2.093a.75.75 0 0 0 1.06 0l3.71-3.71a.75.75 0 0 0-.022-1.08z"/>
-                </svg>
-                <div>{deleteSuccess}</div>
-              </div>
-              <button 
-                type="button" 
-                className="btn-close" 
-                onClick={() => setDeleteSuccess(null)}
-              ></button>
-            </div>
-          )}
+              {/* Search Error */}
+              {errorSearch && (
+                <div className="alert alert-danger" role="alert">
+                  {errorSearch}
+                </div>
+              )}
 
-          {/* Lease Details */}
-          {lease && !deleteSuccess && (
-            <>
-              <div className="mt-4">
-                <h3 className="mb-3 text-center">Lease Details</h3>
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <div className="card bg-light h-100">
-                      <div className="card-header fw-bold">Property</div>
-                      <div className="card-body">
-                        <p className="mb-1">Property ID: <span className="fw-bold">#{lease.propertyId}</span></p>
-                        <p className="mb-1">Tenant ID: <span className="fw-bold">#{lease.tenantId}</span></p>
+              {/* Delete Success */}
+              {deleteSuccess && (
+                <div className="alert alert-success" role="alert">
+                  {deleteSuccess}
+                </div>
+              )}
+
+              {/* Lease Details */}
+              {lease && !deleteSuccess && (
+                <div className="border rounded p-3">
+                  <h6 className="text-center mb-3">Lease #{lease.id}</h6>
+                  
+                  <div className="row g-2 mb-3">
+                    <div className="col-6">
+                      <div className="card bg-light">
+                        <div className="card-header fw-bold text-center py-2">Property</div>
+                        <div className="card-body p-2 text-center">
+                          <p className="mb-1 small">Property ID: <strong>#{lease.propertyId}</strong></p>
+                          <p className="mb-0 small">Tenant ID: <strong>#{lease.tenantId}</strong></p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="card bg-light h-100">
-                      <div className="card-header fw-bold">Period</div>
-                      <div className="card-body">
-                        <p className="mb-1">Start: <span className="badge bg-info">{formatDate(lease.start)}</span></p>
-                        <p className="mb-1">End: <span className="badge bg-warning text-dark">{formatDate(lease.end)}</span></p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-12">
-                    <div className="card bg-light">
-                      <div className="card-header fw-bold">Financial Details (ZAR)</div>
-                      <div className="card-body">
-                        <div className="row text-center">
-                          <div className="col">
-                            <div className="display-6 text-success">R{lease.rent.toLocaleString()}</div>
-                            <small className="text-muted">Rent</small>
-                          </div>
-                          <div className="col">
-                            <div className="display-6">R{lease.levy.toLocaleString()}</div>
-                            <small className="text-muted">Levy</small>
-                          </div>
-                          <div className="col">
-                            <div className="display-6 text-danger">R{lease.bond.toLocaleString()}</div>
-                            <small className="text-muted">Bond</small>
-                          </div>
+                    <div className="col-6">
+                      <div className="card bg-light">
+                        <div className="card-header fw-bold text-center py-2">Period</div>
+                        <div className="card-body p-2 text-center">
+                          <p className="mb-1 small">Start: <span className="badge bg-info">{formatDate(lease.start)}</span></p>
+                          <p className="mb-0 small">End: <span className="badge bg-warning text-dark">{formatDate(lease.end)}</span></p>
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  <div className="card bg-light mb-3">
+                    <div className="card-header fw-bold text-center py-2">Financial Details</div>
+                    <div className="card-body p-2">
+                      <div className="row text-center">
+                        <div className="col-4">
+                          <div className="fs-6 text-success">{formatCurrency(lease.rent)}</div>
+                          <small className="text-muted">Rent</small>
+                        </div>
+                        <div className="col-4">
+                          <div className="fs-6">{formatCurrency(lease.levy)}</div>
+                          <small className="text-muted">Levy</small>
+                        </div>
+                        <div className="col-4">
+                          <div className="fs-6 text-danger">{formatCurrency(lease.bond)}</div>
+                          <small className="text-muted">Bond</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-top">
+                    <button
+                      className="btn btn-danger w-100"
+                      onClick={handleDelete}
+                      disabled={deleteLoading}
+                    >
+                      {deleteLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          Deleting Lease...
+                        </>
+                      ) : (
+                        'Delete Lease'
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Delete Button */}
-              <div className="mt-4 text-center">
-                <button
-                  className="btn btn-danger"
-                  onClick={handleDelete}
-                  disabled={deleteLoading}
-                >
-                  {deleteLoading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2"></span>
-                      Deleting Lease...
-                    </>
-                  ) : (
-                    'Delete This Lease'
-                  )}
-                </button>
-              </div>
-            </>
-          )}
+              {!lease && !deleteSuccess && !errorSearch && (
+                <div className="text-center text-muted py-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" className="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                  </svg>
+                  <p className="mt-2 mb-0">Search for a lease to manage</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className="mt-3 text-center text-muted small">
-        <p>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-            className="bi bi-info-circle me-1" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M8.93 6.588l-2.29.924L5.38 5.24a1 1 0 0 1 1.414-1.414l1.82 1.819 1.82-1.82a1 1 0 0 1 1.414 1.414L10.686 6.5l-1.756.702z"/>
-            <path d="M8.5 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-          </svg>
-          All values in South African Rand (ZAR) • Action cannot be undone
-        </p>
       </div>
     </div>
   );
 };
 
-export default LeaseLookupDelete;
+export default LeasesManagement;
