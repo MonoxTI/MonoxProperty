@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Monokoane Property")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+60cd73ab3d345bed7c6591616788180155884884")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+73ae66f05783d1065de0f88d0a72d7028069e4de")]
 [assembly: System.Reflection.AssemblyProductAttribute("Monokoane Property")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Monokoane Property")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

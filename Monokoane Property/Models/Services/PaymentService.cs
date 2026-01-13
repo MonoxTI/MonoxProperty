@@ -78,24 +78,26 @@ namespace MonoxProperty.Services
         return report;
         }
 
-        public async Task<SummaryDto> GetMonthlySummaryAsync(int year, int month)
-        {
-            if (year < 1 || year > 9999 || month < 1 || month > 12)
-            throw new ArgumentOutOfRangeException(nameof(month), "Year and month must be valid.");
-            var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endDate = startDate.AddMonths(1);
-            
-            var rentTotal = await _db.Payments
-            .Where(p => p.Type == PaymentType.Rent &&
-                        p.PaymentDate >= startDate &&
-                        p.PaymentDate < endDate)
-            .SumAsync(p => p.Amount);
-            
-            var levyTotal = await _db.Payments
-            .Where(p => p.Type == PaymentType.Levy &&
-                        p.PaymentDate >= startDate &&
-                        p.PaymentDate < endDate)
-            .SumAsync(p => p.Amount);
+       // PaymentService.cs
+public async Task<SummaryDto> GetMonthlySummaryAsync(int year, int month)
+{
+    if (year < 1 || year > 9999 || month < 1 || month > 12)
+        throw new ArgumentOutOfRangeException(nameof(month), "Year and month must be valid.");
+    
+    var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+    var endDate = startDate.AddMonths(1);
+    
+    var rentTotal = await _db.Payments
+        .Where(p => p.Type == PaymentType.Rent &&
+                    p.PaymentDate >= startDate &&
+                    p.PaymentDate < endDate)
+        .SumAsync(p => p.Amount);
+
+    var levyTotal = await _db.Payments
+        .Where(p => p.Type == PaymentType.Levy &&
+                    p.PaymentDate >= startDate &&
+                    p.PaymentDate < endDate)
+        .SumAsync(p => p.Amount);
 
     var bondTotal = await _db.Payments
         .Where(p => p.Type == PaymentType.Bond &&
@@ -108,6 +110,11 @@ namespace MonoxProperty.Services
                     e.DateIncurred < endDate)
         .SumAsync(e => e.Amount);
 
+    // Calculate derived values
+    var totalIncome = rentTotal + levyTotal;
+    var profit = totalIncome - (bondTotal + totalExpenses);
+
+    // Return complete DTO with all properties set
     return new SummaryDto
     {
         Year = year,
@@ -115,7 +122,9 @@ namespace MonoxProperty.Services
         TotalRent = rentTotal,
         TotalLevy = levyTotal,
         TotalBond = bondTotal,
-        TotalExpenses = totalExpenses
+        TotalExpenses = totalExpenses,
+        TotalIncome = totalIncome,  // ✅ Explicitly set
+        Profit = profit              // ✅ Explicitly set
     };
 }
     }

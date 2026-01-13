@@ -1,46 +1,46 @@
 using ClosedXML.Excel;
+using MonoxProperty.Interfaces;
 using MonoxProperty.Dtos;
+using System.IO;
 
-public class ExcelExportService
+namespace MonoxProperty.Services
 {
-    public byte[] ExportMonthlySummaryPerProperty(
-        List<ExcelDto> data,
-        int year,
-        int month)
+    public class ExcelService : IExcelExportService
     {
-        using var workbook = new XLWorkbook();
-
-        var groupedProperties = data.GroupBy(x => x.PropertyName);
-
-        foreach (var propertyGroup in groupedProperties)
+        public byte[] ExportPropertyFinance(List<ExcelDto> data)
         {
-            var sheet = workbook.Worksheets.Add(propertyGroup.Key);
+            using var workbook = new XLWorkbook();
+            var sheet = workbook.Worksheets.Add("Property Finance");
+            
+            // Headers
+            sheet.Cell(1, 1).Value = "Property Name";
+            sheet.Cell(1, 2).Value = "Rent";
+            sheet.Cell(1, 3).Value = "Levy";
+            sheet.Cell(1, 4).Value = "Bond";
+            sheet.Cell(1, 5).Value = "Expenses";
+            sheet.Cell(1, 6).Value = "Income";
+            sheet.Cell(1, 7).Value = "Profit";
 
-            sheet.Cell(1, 1).Value = "Property";
-            sheet.Cell(1, 2).Value = propertyGroup.Key;
-
-            sheet.Cell(2, 1).Value = "Month";
-            sheet.Cell(2, 2).Value = $"{month}/{year}";
-
-            sheet.Cell(4, 1).Value = "Rent";
-            sheet.Cell(5, 1).Value = "Levy";
-            sheet.Cell(6, 1).Value = "Bond";
-            sheet.Cell(7, 1).Value = "Rates";
-            sheet.Cell(8, 1).Value = "Expenses";
-            sheet.Cell(10, 1).Value = "Profit";
-
-            sheet.Cell(4, 2).Value = propertyGroup.Sum(x => x.Rent);
-            sheet.Cell(5, 2).Value = propertyGroup.Sum(x => x.Levy);
-            sheet.Cell(6, 2).Value = propertyGroup.Sum(x => x.Bond);
-            sheet.Cell(7, 2).Value = propertyGroup.Sum(x => x.Rates);
-            sheet.Cell(8, 2).Value = propertyGroup.Sum(x => x.Expenses);
-            sheet.Cell(10, 2).Value = propertyGroup.Sum(x => x.Profit);
+            // Data
+            for (int i = 0; i < data.Count; i++)
+            {
+                int row = i + 2;
+                sheet.Cell(row, 1).Value = data[i].PropertyName;
+                sheet.Cell(row, 2).Value = data[i].Rent;
+                sheet.Cell(row, 3).Value = data[i].Levy;
+                sheet.Cell(row, 4).Value = data[i].Bond;
+                sheet.Cell(row, 5).Value = data[i].Expenses;
+                
+                // Formulas
+                sheet.Cell(row, 6).FormulaA1 = $"=B{row}";
+                sheet.Cell(row, 7).FormulaA1 = $"=B{row}-(C{row}+D{row}+E{row})";
+            }
 
             sheet.Columns().AdjustToContents();
-        }
 
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        return stream.ToArray();
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
     }
 }

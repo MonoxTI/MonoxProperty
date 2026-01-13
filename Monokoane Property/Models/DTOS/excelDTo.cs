@@ -6,7 +6,7 @@ namespace MonoxProperty.Dtos
 {
 public class ExcelDto
 {
-    public string PropertyName { get; set; }
+    public string? PropertyName { get; set; }
     public decimal Rent { get; set; }
     public decimal Levy { get; set; }
     public decimal Bond { get; set; }

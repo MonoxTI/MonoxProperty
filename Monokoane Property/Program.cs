@@ -54,8 +54,10 @@ namespace MonoxProperty
             builder.Services.AddScoped<IExpenseService, ExpenseService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<JwtService>();
-            builder.Services.AddScoped<ExcelExportService>();
+            builder.Services.AddScoped<IExcelExportService, ExcelService>();
+            builder.Services.AddScoped<IExpenseService, ExpenseService>(); 
             builder.Services.AddScoped<AuthService>();
+
 
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"]
@@ -109,12 +111,12 @@ namespace MonoxProperty
                     Console.WriteLine("Testing database connection...");
                     if (dbContext.Database.CanConnect())
                     {
-                        Console.WriteLine("✅ Database connected successfully.");
+                        Console.WriteLine("Database connected successfully.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"❌ Database error: {ex.Message}");
+                    Console.WriteLine($"Database error: {ex.Message}");
                     throw;
                 }
             }
