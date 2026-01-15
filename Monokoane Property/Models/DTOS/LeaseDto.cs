@@ -14,5 +14,6 @@ namespace MonoxProperty.Dtos
         public decimal Rent {  get; set; }
         public decimal Levy { get; set; }
         public decimal Bond { get; set; }
+        public decimal Rates { get; set; }
     }
 }

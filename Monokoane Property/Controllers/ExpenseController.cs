@@ -22,19 +22,24 @@ public class ExpenseController : ControllerBase
         services = ExpenseService;
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<ExpenseDto>> GetExpensebyId ( int id)
+    [HttpGet("All")]
+    public async Task<ActionResult<IEnumerable<ExpenseDto>>> GetAllExpenses()
     {
-            if(id <= 0 )
-            {
-                return BadRequest("Expense ID required.");
-            }
-            var expense = await services.GetExpensebyId(id);
-            if(expense == null)
-            return NotFound(new {message= $"Expense with ID {id} not found "});
-
-            return Ok(expense);
+        var expenses = await services.GetAllExpenses();
+        return Ok(expenses);
     }
+
+     public async Task<ActionResult<ExpenseDto>> GetExpensebyId(int id)
+        {
+            var expense = await services.GetExpensebyId(id);
+            if (expense == null)
+            {
+                return NotFound(new { message = $"Expense with ID {id} not found." });
+            }
+            return Ok(expense);
+        }
+
+    
     [HttpPost]
     public async Task<ActionResult<ExpenseDto>> AddExpense([FromBody] ExpenseDto data)
     {
@@ -60,25 +65,6 @@ public class ExpenseController : ControllerBase
         {
             return BadRequest(new {message = ex.Message });
         }
-    }
-
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<ExpenseDto>> UpdateExpense(int id, [FromBody] ExpenseDto data)
-    {
-            if(id <= 0 || data == null)
-            {
-                return BadRequest(new { message = "Valid Expense ID is required" });
-            }
-            if(data.Id != id)
-            {
-                return BadRequest("Expense ID mismatch between URL and body." );
-            }
-            var updatedExpense = await services.UpdateExpense(id, data);
-            if(updatedExpense == null)
-            {
-                return NotFound(new { message = $"Expense with ID {id} not found." });
-            }
-            return Ok(updatedExpense);
     }
     
     [HttpDelete("{id:int}")]

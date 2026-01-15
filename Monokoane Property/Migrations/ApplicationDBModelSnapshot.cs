@@ -70,6 +70,9 @@ namespace Monokoane_Property.Migrations
                     b.Property<int>("PropertyId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Rates")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("Rent")
                         .HasColumnType("numeric");
 
@@ -102,9 +105,6 @@ namespace Monokoane_Property.Migrations
                     b.Property<int>("LeaseId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("LeaseId1")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -114,8 +114,6 @@ namespace Monokoane_Property.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LeaseId");
-
-                    b.HasIndex("LeaseId1");
 
                     b.ToTable("Payments");
                 });
@@ -147,6 +145,9 @@ namespace Monokoane_Property.Migrations
                     b.Property<string>("PropertyName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("Rates")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("Rent")
                         .HasColumnType("numeric");
@@ -292,14 +293,10 @@ namespace Monokoane_Property.Migrations
             modelBuilder.Entity("MonoxProperty.Entities.Payment", b =>
                 {
                     b.HasOne("MonoxProperty.Entities.Lease", "Lease")
-                        .WithMany()
+                        .WithMany("Payments")
                         .HasForeignKey("LeaseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("MonoxProperty.Entities.Lease", null)
-                        .WithMany("Payments")
-                        .HasForeignKey("LeaseId1");
 
                     b.Navigation("Lease");
                 });

@@ -1,4 +1,6 @@
 using AutoMapper;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using MonoxProperty.Entities;
 using MonoxProperty.Dtos;
 using MonoxProperty.Interfaces;
@@ -17,6 +19,12 @@ namespace MonoxProperty.Services
         {
             _repo = repo;
             _mapper = mapper;
+        }
+
+        public async Task<IEnumerable<ExpenseDto>> GetAllExpenses()
+        {
+            var expenses = await _repo.GetAllAsync();
+            return _mapper.Map<IEnumerable<ExpenseDto>>(expenses);
         }
 
         public async Task<ExpenseDto?> GetExpensebyId(int Id)
@@ -43,18 +51,6 @@ namespace MonoxProperty.Services
             var expenses = _mapper.Map<Expense>(dto);
             var newexpense = await _repo.AddAsync(expenses);
             return _mapper.Map<ExpenseDto>(newexpense);
-        }
-
-        public async Task<ExpenseDto?> UpdateExpense(int Id, ExpenseDto dto)
-        {
-            var expenses = await _repo.GetIdAsync(Id);
-            if(expenses == null)
-            {
-                return null;
-            }
-            _mapper.Map(dto, expenses);
-            var update = await _repo.UpdateAsync(Id, expenses);
-            return _mapper.Map<ExpenseDto>(update);
         }
 
         public async Task<bool> DeleteExpense(int Id)

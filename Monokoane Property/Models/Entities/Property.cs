@@ -21,6 +21,7 @@ namespace MonoxProperty.Entities
          public decimal Rent { get; set; }
          public decimal Levy { get; set; }
          public decimal Bond { get; set; }
+         public decimal Rates { get; set; }
          
         public ICollection<Lease>? Leases { get; set;} = new List<Lease>();
         public ICollection<Expense>? Expenses { get; set;}

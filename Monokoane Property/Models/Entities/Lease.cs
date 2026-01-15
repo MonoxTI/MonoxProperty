@@ -25,6 +25,8 @@ namespace MonoxProperty.Entities
         public decimal Levy { get; set; }
         [Range(0, double.MaxValue)]
         public decimal Bond { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal Rates { get; set; }
 
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }

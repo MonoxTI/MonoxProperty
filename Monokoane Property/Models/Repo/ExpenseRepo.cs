@@ -20,6 +20,11 @@ namespace MonoxProperty.Repository
             .FirstOrDefaultAsync(p => p.Id == id);
         }
 
+       public async Task<IEnumerable<Expense>> GetAllAsync()
+       {
+        return await _context.Expenses.ToListAsync();
+        }
+
         public async Task<Expense?> Getby(int PropertyId)
         {
             return await _context.Expenses
@@ -29,13 +34,6 @@ namespace MonoxProperty.Repository
         public async Task<Expense> AddAsync(Expense expense)
         {
             _context.Expenses.Add(expense);
-            await _context.SaveChangesAsync();
-            return expense;
-        }
-
-        public async Task<Expense> UpdateAsync(int id, Expense expense)
-        {
-            _context.Expenses.Update(expense);
             await _context.SaveChangesAsync();
             return expense;
         }

@@ -49,7 +49,7 @@ namespace MonoxProperty
 
         modelBuilder.Entity<Payment>()
         .HasOne(p => p.Lease)
-        .WithMany()
+        .WithMany(l => l.Payments)
         .HasForeignKey(p => p.LeaseId)
         .OnDelete(DeleteBehavior.Restrict);
     }

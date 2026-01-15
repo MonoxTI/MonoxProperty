@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Monokoane_Property.Migrations
 {
     [DbContext(typeof(ApplicationDB))]
-    [Migration("20251217094603_AddPaymentsToLease")]
-    partial class AddPaymentsToLease
+    [Migration("20260115203345_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -73,6 +73,9 @@ namespace Monokoane_Property.Migrations
                     b.Property<int>("PropertyId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Rates")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("Rent")
                         .HasColumnType("numeric");
 
@@ -105,9 +108,6 @@ namespace Monokoane_Property.Migrations
                     b.Property<int>("LeaseId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("LeaseId1")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -117,8 +117,6 @@ namespace Monokoane_Property.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LeaseId");
-
-                    b.HasIndex("LeaseId1");
 
                     b.ToTable("Payments");
                 });
@@ -134,6 +132,12 @@ namespace Monokoane_Property.Migrations
                     b.Property<bool>("Apartments")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal>("Bond")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Levy")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasColumnType("text");
@@ -144,6 +148,12 @@ namespace Monokoane_Property.Migrations
                     b.Property<string>("PropertyName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("Rates")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Rent")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("Units")
                         .HasColumnType("integer");
@@ -286,14 +296,10 @@ namespace Monokoane_Property.Migrations
             modelBuilder.Entity("MonoxProperty.Entities.Payment", b =>
                 {
                     b.HasOne("MonoxProperty.Entities.Lease", "Lease")
-                        .WithMany()
+                        .WithMany("Payments")
                         .HasForeignKey("LeaseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("MonoxProperty.Entities.Lease", null)
-                        .WithMany("Payments")
-                        .HasForeignKey("LeaseId1");
 
                     b.Navigation("Lease");
                 });

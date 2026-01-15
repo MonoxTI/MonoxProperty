@@ -3,9 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from '../Nav.tsx';
 
-/* =======================
-   Types (aligned with your C# Dto)
-======================= */
 
 interface LeaseDto {
   id: number;
@@ -14,23 +11,27 @@ interface LeaseDto {
   tenantId: number;
   tenantName: string;
   rent: number;
+  levy: number;
+  bond: number;
+  rates: number;
 }
 
 enum PaymentType {
   Rent = 0,
   Levy = 1,
   Bond = 2,
-  Other = 3
+  Rates = 3,
+  Other = 4
 }
 
-// 👇 Keep camelCase for TypeScript interface
+
 interface RecordPaymentDto {
   leaseId: number;
   type: PaymentType;
   amount: number;
 }
 
-// 👇 But send PascalCase to .NET backend
+
 interface BackendRecordPaymentDto {
   LeaseId: number;
   Type: PaymentType;
@@ -119,10 +120,13 @@ const RecordPayment: React.FC = () => {
             suggestedAmount = selectedLease.rent.toString();
             break;
           case PaymentType.Bond:
-            suggestedAmount = selectedLease.rent.toString(); // Bond usually equals rent
+            suggestedAmount = selectedLease.bond.toString();
             break;
           case PaymentType.Levy:
-            suggestedAmount = "0"; // Default to 0, user can adjust
+            suggestedAmount = selectedLease.levy.toString(); // Default to 0, user can adjust
+            break;
+          case PaymentType.Rates:
+            suggestedAmount = selectedLease.rates.toString(); // Default to 0, user can adjust
             break;
           case PaymentType.Other:
             suggestedAmount = ""; // Leave empty for custom amounts
@@ -191,7 +195,7 @@ const RecordPayment: React.FC = () => {
       }
 
       setSuccess(true);
-      setTimeout(() => navigate("/payments"), 2000);
+      setTimeout(() => navigate("/home"), 2000);
     } catch (err) {
       console.error("Record payment error:", err);
       setError(
@@ -319,8 +323,8 @@ const RecordPayment: React.FC = () => {
 
               {!success && (
                 <div className="mt-3 text-center">
-                  <a href="/payments" className="text-decoration-none">
-                    ← Back to Payments
+                  <a href="/home" className="text-decoration-none">
+                    ← Back to Home
                   </a>
                 </div>
               )}

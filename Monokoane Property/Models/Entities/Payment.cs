@@ -25,6 +25,8 @@ namespace MonoxProperty.Entities
     {
         Rent,
         Levy,
-        Bond
+        Bond,
+        Rates,
+        Other
     }
 }
