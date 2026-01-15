@@ -23,10 +23,18 @@ enum PaymentType {
   Other = 3
 }
 
+// 👇 Keep camelCase for TypeScript interface
 interface RecordPaymentDto {
   leaseId: number;
   type: PaymentType;
   amount: number;
+}
+
+// 👇 But send PascalCase to .NET backend
+interface BackendRecordPaymentDto {
+  LeaseId: number;
+  Type: PaymentType;
+  Amount: number;
 }
 
 interface ApiErrorResponse {
@@ -100,6 +108,33 @@ const RecordPayment: React.FC = () => {
     fetchLeasesWithDetails();
   }, []);
 
+  // 🔥 PRO TIP: Auto-fill amount based on payment type and lease
+  useEffect(() => {
+    if (leaseId && leases.length > 0) {
+      const selectedLease = leases.find(l => l.id === leaseId);
+      if (selectedLease) {
+        let suggestedAmount = "";
+        switch (paymentType) {
+          case PaymentType.Rent:
+            suggestedAmount = selectedLease.rent.toString();
+            break;
+          case PaymentType.Bond:
+            suggestedAmount = selectedLease.rent.toString(); // Bond usually equals rent
+            break;
+          case PaymentType.Levy:
+            suggestedAmount = "0"; // Default to 0, user can adjust
+            break;
+          case PaymentType.Other:
+            suggestedAmount = ""; // Leave empty for custom amounts
+            break;
+          default:
+            suggestedAmount = "";
+        }
+        setAmount(suggestedAmount);
+      }
+    }
+  }, [leaseId, paymentType, leases]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -116,10 +151,11 @@ const RecordPayment: React.FC = () => {
       return;
     }
 
-    const payload: RecordPaymentDto = {
-      leaseId: leaseId as number,
-      type: paymentType,
-      amount: amountNum,
+    // 👇 SEND PASCALCASE TO .NET BACKEND
+    const payload: BackendRecordPaymentDto = {
+      LeaseId: leaseId as number,
+      Type: paymentType,
+      Amount: amountNum,
     };
 
     const token = localStorage.getItem("token");
@@ -127,29 +163,31 @@ const RecordPayment: React.FC = () => {
     try {
       setLoading(true);
 
-      const res = await fetch(`http://localhost:5153/api/payment`, {
+      const res = await fetch(`http://localhost:5153/api/pay/record`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload), // 👈 Now sends PascalCase
       });
 
       const text = await res.text();
 
       if (!res.ok) {
-        let errorMessage = `Failed to record payment (${res.status})`;
+        let errorMessage = `Failed to record payment`;
+        
         try {
           if (text.trim()) {
             const errorData = JSON.parse(text) as ApiErrorResponse;
+            // 👇 Show specific backend error message
             errorMessage = errorData.message || errorData.title || errorMessage;
           }
         } catch {
           console.warn("Non-JSON error response:", text.substring(0, 200));
           errorMessage = `Server error: ${res.status} ${res.statusText || ""}`;
         }
-        throw new Error(errorMessage);
+        throw new Error(errorMessage); 
       }
 
       setSuccess(true);

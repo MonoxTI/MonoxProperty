@@ -75,27 +75,57 @@ namespace MonoxProperty.Controllers
             
         }
 
-       [HttpGet("export/finance")]
+  // PaymentController.cs or ReportController.cs
+[HttpGet("export/finance")]
 public async Task<IActionResult> ExportPropertyFinance()
 {
-    var properties = await _propertyRepository.GetAllAsync();
-
-    var data = properties.Select(p => new ExcelDto
+    try
     {
-        PropertyName = p.PropertyName,
-        Rent = p.Rent,
-        Levy = p.Levy,
-        Bond = p.Bond,
-        Expenses = p.Expenses.Sum(e => e.Amount) // Note: "Expenses" (plural) to match your DTO
-    }).ToList();
+        var properties = await _propertyRepository.GetAllAsync();
+        byte[] file; // 👈 Declare ONCE at the top
+        
+        if (properties == null || !properties.Any())
+        {
+            // Create empty data
+            var emptyData = new List<ExcelDto>
+            {
+                new ExcelDto 
+                { 
+                    PropertyName = "No properties found", 
+                    Rent = 0, 
+                    Levy = 0, 
+                    Bond = 0, 
+                    Expenses = 0 
+                }
+            };
+            
+            file = _excelExportService.ExportPropertyFinance(emptyData); // 👈 Assign to existing variable
+        }
+        else
+        {
+            // Process actual data
+            var data = properties.Select(p => new ExcelDto
+            {
+                PropertyName = p.PropertyName ?? "Unknown Property",
+                Rent = p.Rent,
+                Levy = p.Levy,
+                Bond = p.Bond,
+                Expenses = p.Expenses?.Sum(e => e.Amount) ?? 0
+            }).ToList();
 
-    var file = _excelExportService.ExportPropertyFinance(data);
+            file = _excelExportService.ExportPropertyFinance(data); // 👈 Assign to existing variable
+        }
 
-    return File(
-        file,
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "property_finance.xlsx"
-    );
+        return File(file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "property_finance.xlsx");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Excel export error: {ex.Message}");
+        return BadRequest(new { 
+            error = "Failed to generate Excel report", 
+            message = ex.Message 
+        });
+    }
 }
 
     }

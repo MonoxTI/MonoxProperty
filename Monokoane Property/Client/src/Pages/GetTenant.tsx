@@ -206,7 +206,7 @@ const TenantsManagement: React.FC = () => {
       <Navigation />
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Tenant Management</h2>
-        <Link to="/tenants/add" className="btn btn-primary">
+        <Link to="/add-tenant" className="btn btn-primary">
           Add Tenant
         </Link>
       </div>
@@ -249,7 +249,7 @@ const TenantsManagement: React.FC = () => {
                         </svg>
                       </div>
                       <p className="mb-3">No tenants found.</p>
-                      <Link to="/tenants/add" className="btn btn-primary">
+                      <Link to="add-tenant" className="btn btn-primary">
                         Add Your First Tenant
                       </Link>
                     </div>

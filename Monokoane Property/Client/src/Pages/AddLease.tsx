@@ -160,7 +160,7 @@ const AddLease: React.FC = () => {
     try {
       setLoading(true);
 
-      const res = await fetch(`http://localhost:5153/api/lease`, {
+      const res = await fetch(`http://localhost:5153/api/lease/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -186,7 +186,7 @@ const AddLease: React.FC = () => {
       }
 
       setSuccess(true);
-      setTimeout(() => navigate("/leases"), 2000);
+      setTimeout(() => navigate("/home"), 2000);
     } catch (err) {
       console.error("Add lease error:", err);
       setError(

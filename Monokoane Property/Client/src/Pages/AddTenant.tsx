@@ -97,7 +97,7 @@ const AddTenant: React.FC = () => {
 
       setSuccess(true);
       // Redirect after success (or reset form)
-      setTimeout(() => navigate('/tenants'), 2000);
+      setTimeout(() => navigate('/home'), 2000);
     } catch (err: any) {
       console.error('Tenant creation error:', err);
       setError(err.message || 'An unexpected error occurred');

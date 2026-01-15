@@ -81,44 +81,48 @@ const PropertiesManagement: React.FC = () => {
 
   // Handle property search
   const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  if (!searchName.trim()) {
+    setErrorSearch("Please enter a property name");
+    return;
+  }
+
+  setLoadingSearch(true);
+  setErrorSearch(null);
+  setProperty(null);
+  setDeleteSuccess(null);
+
+  try {
+    const token = localStorage.getItem("token");
     
-    if (!searchName.trim()) {
-      setErrorSearch("Please enter a property name");
-      return;
+    // 👇 SEND POST REQUEST WITH NAME IN BODY
+    const response = await fetch(`http://localhost:5153/api/property/byname`, {
+      method: "POST", // 👈 Changed from GET to POST
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ propertyName: searchName.trim() }) // 👈 Send name in request body
+    });
+
+    if (response.status === 404) {
+      throw new Error("Property not found");
     }
 
-    setLoadingSearch(true);
-    setErrorSearch(null);
-    setProperty(null);
-    setDeleteSuccess(null);
-
-    try {
-      const token = localStorage.getItem("token");
-      
-      const response = await fetch(`http://localhost:5153/api/property/byname?name=${encodeURIComponent(searchName)}`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        }
-      });
-
-      if (response.status === 404) {
-        throw new Error("Property not found");
-      }
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setProperty(data as PropertyDto);
-    } catch (err: any) {
-      console.error("Search error:", err);
-      setErrorSearch(err.message || "Failed to fetch property");
-    } finally {
-      setLoadingSearch(false);
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
-  };
+
+    const data = await response.json();
+    setProperty(data as PropertyDto);
+  } catch (err: any) {
+    console.error("Search error:", err);
+    setErrorSearch(err.message || "Failed to fetch property");
+  } finally {
+    setLoadingSearch(false);
+  }
+};
 
   // Handle property delete
   const handleDelete = async () => {

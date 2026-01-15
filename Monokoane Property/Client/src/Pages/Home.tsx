@@ -47,11 +47,10 @@ const HomeDashboard: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ FIXED: Correct endpoint URL (matches your controller)
   const downloadFinanceExcel = async () => {
     try {
       const response = await fetch(
-        'http://localhost:5153/api/report/export/finance', // ✅ Changed from /property/ to /report/
+        'http://localhost:5153/api/pay/export/finance', 
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -62,7 +61,14 @@ const HomeDashboard: React.FC = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Excel export error:', errorText);
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        
+        // Try to parse JSON error for better messaging
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || errorJson.details || `Export failed: ${response.status}`);
+        } catch {
+          throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        }
       }
 
       const blob = await response.blob();
@@ -78,7 +84,7 @@ const HomeDashboard: React.FC = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download error:', err);
-      setError('Failed to download Excel report. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to download Excel report. Please try again.');
     }
   };
 
@@ -212,7 +218,7 @@ const HomeDashboard: React.FC = () => {
           <div className="card shadow-sm h-100">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">Properties ({properties.length})</h6>
-              <Link to="/properties/add" className="btn btn-sm btn-primary">
+              <Link to="/add-property" className="btn btn-sm btn-primary">
                 + Add
               </Link>
             </div>

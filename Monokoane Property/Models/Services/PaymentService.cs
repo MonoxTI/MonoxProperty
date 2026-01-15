@@ -15,25 +15,41 @@ namespace MonoxProperty.Services
         }
 
         public async Task RecordPaymentAsync(int leaseId, PaymentType type, decimal amount)
-        {
-            var leaseExists = await _db.Leases.AnyAsync(l => l.Id == leaseId);
-            if (!leaseExists)
-            {
-                throw new ArgumentException($"Lease with ID {leaseId} does not exist.");
-            }
-            
-            var payment = new Payment
-            {
-                LeaseId = leaseId,
-                Type = type,
-                Amount = amount,
-                PaymentDate = DateTime.UtcNow
-            };
-            
-            _db.Payments.Add(payment);
-            await _db.SaveChangesAsync();
-            
-        }
+{
+    var leaseExists = await _db.Leases.AnyAsync(l => l.Id == leaseId);
+    if (!leaseExists)
+        throw new ArgumentException($"Lease with ID {leaseId} does not exist.");
+    
+    var now = DateTime.UtcNow;
+    
+    // ✅ FIX: Explicitly set DateTimeKind to Utc
+    var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+    var endOfMonth = startOfMonth.AddMonths(1);
+    
+    // Check if payment of same type already exists THIS MONTH
+    var paymentExists = await _db.Payments
+        .AnyAsync(p => p.LeaseId == leaseId && 
+                      p.Type == type && 
+                      p.PaymentDate >= startOfMonth && 
+                      p.PaymentDate < endOfMonth);
+                      
+    if (paymentExists)
+    {
+        throw new InvalidOperationException(
+            $"A {type} payment already exists for lease {leaseId} in {now:MMMM yyyy}.");
+    }
+    
+    var payment = new Payment
+    {
+        LeaseId = leaseId,
+        Type = type,
+        Amount = amount,
+        PaymentDate = now
+    };
+    
+    _db.Payments.Add(payment);
+    await _db.SaveChangesAsync();
+}
 
         public async Task<PropertyReportDto?> GetMonthlySummary(string propertyName)
         {

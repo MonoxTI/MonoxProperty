@@ -43,7 +43,16 @@ namespace MonoxProperty.Services
        {
         if (dto == null)
         throw new ArgumentNullException(nameof(dto));
-        
+
+        if(dto.Apartments && dto.Units <= 0)
+        {
+            throw new ArgumentException("Units must be greater than zero for apartment properties.", nameof(dto.Units));
+        }
+        else if (!dto.Apartments && dto.Units != 1)
+        {
+            throw new ArgumentException("Non-apartment properties.");
+        }
+
         var propertyName = dto.PropertyName?.Trim();
         if (string.IsNullOrWhiteSpace(propertyName))
         throw new ArgumentException("Property name is required.", nameof(dto.PropertyName));
@@ -57,6 +66,7 @@ namespace MonoxProperty.Services
         var newProperty = await _repo.AddAsync(property);
         return _mapper.Map<PropertyDto>(newProperty);
         }
+       
         
         // Update property
         //# Task<>
