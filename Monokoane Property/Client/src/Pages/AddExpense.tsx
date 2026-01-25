@@ -137,7 +137,7 @@ const AddExpense: React.FC = () => {
       }
 
       setSuccess(true);
-      setTimeout(() => navigate("/expenses"), 2000);
+      setTimeout(() => navigate("/home"), 2000);
     } catch (err) {
       console.error("Add expense error:", err);
       setError(

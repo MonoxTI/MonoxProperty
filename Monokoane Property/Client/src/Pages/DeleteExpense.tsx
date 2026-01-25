@@ -1,6 +1,6 @@
 // src/components/ExpensesManagement.tsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Navigation from '../Nav.tsx';
 
 interface ExpenseDto {
@@ -23,25 +23,22 @@ const ExpensesManagement: React.FC = () => {
   const [errorExpenses, setErrorExpenses] = useState<string | null>(null);
 
   // State for Lookup & Delete
-  const [searchId, setSearchId] = useState<string>("");
-  const [searchPropertyId, setSearchPropertyId] = useState<string>("");
+  const [expenseId, setExpenseId] = useState<string>('');
   const [expense, setExpense] = useState<ExpenseDto | null>(null);
-  const [loadingSearch, setLoadingSearch] = useState<boolean>(false);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [errorSearch, setErrorSearch] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
-  // Fetch all properties for dropdown
+  // Fetch all properties for display
   const [properties, setProperties] = useState<PropertyDto[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(true);
 
-  const navigate = useNavigate();
-
-  // Fetch all expenses on mount
+  // Fetch all expenses and properties on mount
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const [expensesRes, propertiesRes] = await Promise.all([
@@ -49,12 +46,8 @@ const ExpensesManagement: React.FC = () => {
           fetch('http://localhost:5153/api/property', { headers })
         ]);
 
-        if (!expensesRes.ok) {
-          throw new Error(`Failed to load expenses (${expensesRes.status})`);
-        }
-        if (!propertiesRes.ok) {
-          throw new Error(`Failed to load properties (${propertiesRes.status})`);
-        }
+        if (!expensesRes.ok) throw new Error(`Failed to load expenses (${expensesRes.status})`);
+        if (!propertiesRes.ok) throw new Error(`Failed to load properties (${propertiesRes.status})`);
 
         const expensesData = await expensesRes.json();
         const propertiesData = await propertiesRes.json();
@@ -62,8 +55,8 @@ const ExpensesManagement: React.FC = () => {
         setExpenses(Array.isArray(expensesData) ? expensesData : []);
         setProperties(Array.isArray(propertiesData) ? propertiesData : []);
       } catch (err: any) {
-        console.error("Fetch all data error:", err);
-        setErrorExpenses(err.message || "Failed to load data. Please refresh.");
+        console.error('Fetch all data error:', err);
+        setErrorExpenses(err.message || 'Failed to load data.');
       } finally {
         setLoadingExpenses(false);
         setLoadingProperties(false);
@@ -73,46 +66,29 @@ const ExpensesManagement: React.FC = () => {
     fetchAllData();
   }, []);
 
-  const handleSearchById = async (e: React.FormEvent) => {
+  // Handle expense search by ID
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const idNum = Number(searchId.trim());
-    if (!idNum || idNum <= 0 || !Number.isInteger(idNum)) {
-      setErrorSearch("Please enter a valid expense ID");
+
+    const id = Number(expenseId);
+    if (isNaN(id) || id <= 0) {
+      setErrorSearch('Please enter a valid expense ID (number > 0)');
       return;
     }
 
-    await fetchExpenseById(idNum);
-  };
-
-  const handleSearchByProperty = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const propertyIdNum = Number(searchPropertyId.trim());
-    if (!propertyIdNum || propertyIdNum <= 0 || !Number.isInteger(propertyIdNum)) {
-      setErrorSearch("Please select a valid property");
-      return;
-    }
-
-    await fetchExpenseByProperty(propertyIdNum);
-  };
-
-  const fetchExpenseById = async (id: number) => {
     setLoadingSearch(true);
     setErrorSearch(null);
     setExpense(null);
     setDeleteSuccess(null);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5153/api/expense/${id}`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        }
-      });
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await fetch(`http://localhost:5153/api/expense/${id}`, { headers });
 
       if (response.status === 404) {
-        throw new Error("Expense not found");
+        throw new Error('Expense not found');
       }
 
       if (!response.ok) {
@@ -122,46 +98,14 @@ const ExpensesManagement: React.FC = () => {
       const data = await response.json();
       setExpense(data as ExpenseDto);
     } catch (err: any) {
-      console.error("Search error:", err);
-      setErrorSearch(err.message || "Failed to fetch expense");
+      console.error('Expense fetch error:', err);
+      setErrorSearch(err.message || 'Failed to load expense');
     } finally {
       setLoadingSearch(false);
     }
   };
 
-  const fetchExpenseByProperty = async (propertyId: number) => {
-    setLoadingSearch(true);
-    setErrorSearch(null);
-    setExpense(null);
-    setDeleteSuccess(null);
-
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5153/api/expense/property/${propertyId}`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        }
-      });
-
-      if (response.status === 404) {
-        throw new Error("No expenses found for this property");
-      }
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const expenseData = Array.isArray(data) ? data[0] : data;
-      setExpense(expenseData as ExpenseDto);
-    } catch (err: any) {
-      console.error("Search error:", err);
-      setErrorSearch(err.message || "Failed to fetch expense");
-    } finally {
-      setLoadingSearch(false);
-    }
-  };
-
+  // Handle expense delete
   const handleDelete = async () => {
     if (!expense) return;
 
@@ -174,13 +118,12 @@ const ExpensesManagement: React.FC = () => {
     setDeleteSuccess(null);
 
     try {
-      const token = localStorage.getItem("token");
-      
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       const response = await fetch(`http://localhost:5153/api/expense/${expense.id}`, {
-        method: "DELETE",
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        }
+        method: 'DELETE',
+        headers,
       });
 
       if (!response.ok) {
@@ -199,29 +142,25 @@ const ExpensesManagement: React.FC = () => {
 
       setDeleteSuccess(`Expense #${expense.id} has been deleted successfully.`);
       setExpense(null);
-      setSearchId("");
-      setSearchPropertyId("");
-      
+      setExpenseId('');
+
       // Refresh expenses list
-      setTimeout(() => {
-        const fetchExpenses = async () => {
-          try {
-            const token = localStorage.getItem("token");
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const response = await fetch('http://localhost:5153/api/expense/All', { headers });
-            if (response.ok) {
-              const data = await response.json();
-              setExpenses(Array.isArray(data) ? data : []);
-            }
-          } catch (err) {
-            console.error('Refresh expenses error:', err);
+      setTimeout(async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const headers = token ? { Authorization: `Bearer ${token}` } : {};
+          const res = await fetch('http://localhost:5153/api/expense/All', { headers });
+          if (res.ok) {
+            const data = await res.json();
+            setExpenses(Array.isArray(data) ? data : []);
           }
-        };
-        fetchExpenses();
+        } catch (err) {
+          console.error('Refresh expenses error:', err);
+        }
       }, 1000);
     } catch (err: any) {
-      console.error("Delete error:", err);
-      setErrorSearch(err.message || "Failed to delete expense");
+      console.error('Delete error:', err);
+      setErrorSearch(err.message || 'Failed to delete expense.');
     } finally {
       setDeleteLoading(false);
     }
@@ -293,7 +232,7 @@ const ExpensesManagement: React.FC = () => {
                           viewBox="0 0 16 16"
                         >
                           <path d="M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"/>
-                          <path d="M9.438 11.944c.047.596.518 1.066 1.072 1.066.555 0 1.026-.47 1.072-1.066l.005-.278c.004-.24-.008-.48-.035-.718l-.014-.127c-.018-.16-.036-.321-.063-.481l-.027-.162c-.025-.15-.055-.3-.09-.448l-.038-.152c-.03-.12-.065-.24-.105-.358l-.043-.128c-.035-.105-.075-.21-.12-.313l-.05-.107c-.04-.086-.085-.172-.135-.257l-.057-.096c-.045-.076-.095-.152-.15-.226l-.064-.085c-.05-.067-.105-.133-.165-.198l-.073-.077c-.06-.063-.125-.125-.195-.185l-.082-.07c-.065-.055-.135-.11-.21-.163l-.09-.062c-.07-.048-.145-.095-.225-.14l-.1-.055c-.08-.044-.165-.087-.255-.128l-.11-.05c-.09-.04-.185-.078-.285-.114l-.12-.043c-.1-.035-.205-.068-.315-.1l-.13-.036c-.11-.03-.225-.058-.345-.084l-.14-.028c-.12-.023-.245-.044-.375-.062l-.15-.02c-.13-.016-.265-.03-.405-.042l-.16-.012c-.14-.01-.285-.018-.435-.024l-.17-.006c-.15-.004-.305-.006-.465-.006H3.5c-.16 0-.315.002-.465.006l-.17.006c-.15.006-.295.014-.435.024l-.16.012c-.14.012-.275.026-.405.042l-.15.02c-.13.018-.255.039-.375.062l-.14.028c-.12.026-.235.054-.345.084l-.13.036c-.11.032-.215.065-.315.1l-.12.043c-.1.036-.195.074-.285.114l-.11.05c-.09.041-.175.084-.255.128l-.1.055c-.08.045-.155.092-.225.14l-.09.062c-.07.053-.135.108-.195.163l-.082.07c-.07.06-.135.122-.195.185l-.073.077c-.06.065-.115.131-.165.198l-.064.085c-.055.074-.105.15-.15.226l-.057.096c-.045.103-.085.208-.12.313l-.043.128c-.04.118-.075.238-.105.358l-.038.152c-.035.148-.065.298-.09.448l-.027.162c-.027.16-.045.321-.063.481l-.014.127c-.027.238-.039.478-.035.718l.005.278c.046.596.517 1.066 1.071 1.066.555 0 1.026-.47 1.072-1.066l.005-.278c.004-.24-.008-.48-.035-.718l-.014-.127c-.018-.16-.036-.321-.063-.481l-.027-.162c-.025-.15-.055-.3-.09-.448l-.038-.152c-.03-.12-.065-.24-.105-.358l-.043-.128c-.035-.105-.075-.21-.12-.313l-.05-.107c-.04-.086-.085-.172-.135-.257l-.057-.096c-.045-.076-.095-.152-.15-.226l-.064-.085c-.05-.067-.105-.133-.165-.198l-.073-.077c-.06-.063-.125-.125-.195-.185l-.082-.07c-.065-.055-.135-.11-.21-.163l-.09-.062c-.07-.048-.145-.095-.225-.14l-.1-.055c-.08-.044-.165-.087-.255-.128l-.11-.05c-.09-.04-.185-.078-.285-.114l-.12-.043c-.1-.035-.205-.068-.315-.1l-.13-.036c-.11-.03-.225-.058-.345-.084l-.14-.028c-.12-.023-.245-.044-.375-.062l-.15-.02c-.13-.016-.265-.03-.405-.042l-.16-.012c-.14-.01-.285-.018-.435-.024l-.17-.006c-.15-.004-.305-.006-.465-.006H3.5c-.16 0-.315.002-.465.006l-.17.006c-.15.006-.295.014-.435.024l-.16.012c-.14.012-.275.026-.405.042l-.15.02c-.13.018-.255.039-.375.062l-.14.028c-.12.026-.235.054-.345.084l-.13.036c-.11.032-.215.065-.315.1l-.12.043c-.1.036-.195.074-.285.114l-.11.05c-.09.041-.175.084-.255.128l-.1.055c-.08.045-.155.092-.225.14l-.09.062c-.07.053-.135.108-.195.163l-.082.07c-.07.06-.135.122-.195.185l-.073.077c-.06.065-.115.131-.165.198l-.064.085c-.055.074-.105.15-.15.226l-.057.096c-.045.103-.085.208-.12.313l-.043.128c-.04.118-.075.238-.105.358l-.038.152c-.025.15-.055.3-.09.448l-.027.162c-.027.16-.045.321-.063.481l-.014.127c-.027.238-.039.478-.035.718l.005.278c.046.596.517 1.066 1.071 1.066.555 0 1.026-.47 1.072-1.066z"/>
+                          <path d="M9.438 11.944c.047.596.518 1.066 1.072 1.066.555 0 1.026-.47 1.072-1.066l.005-.278c.004-.24-.008-.48-.035-.718l-.014-.127c-.018-.16-.036-.321-.063-.481l-.027-.162c-.025-.15-.055-.3-.09-.448l-.038-.152c-.03-.12-.065-.24-.105-.358l-.043-.128c-.035-.105-.075-.21-.12-.313l-.05-.107c-.04-.086-.085-.172-.135-.257l-.057-.096c-.045-.076-.095-.152-.15-.226l-.064-.085c-.05-.067-.105-.133-.165-.198l-.073-.077c-.06-.063-.125-.125-.195-.185l-.082-.07c-.065-.055-.135-.11-.21-.163l-.09-.062c-.07-.048-.145-.095-.225-.14l-.1-.055c-.08-.044-.165-.087-.255-.128l-.11-.05c-.09-.04-.185-.078-.285-.114l-.12-.043c-.1-.035-.205-.068-.315-.1l-.13-.036c-.11-.03-.225-.058-.345-.084l-.14-.028c-.12-.023-.245-.044-.375-.062l-.15-.02c-.13-.016-.265-.03-.405-.042l-.16-.012c-.14-.01-.285-.018-.435-.024l-.17-.006c-.15-.004-.305-.006-.465-.006H3.5c-.16 0-.315.002-.465.006l-.17.006c-.15.006-.295.014-.435.024l-.16.012c-.14.012-.275.026-.405.042l-.15.02c-.13.018-.255.039-.375.062l-.14.028c-.12.026-.235.054-.345.084l-.13.036c-.11.032-.215.065-.315.1l-.12.043c-.1.036-.195.074-.285.114l-.11.05c-.09.041-.175.084-.255.128l-.1.055c-.08.045-.155.092-.225.14l-.09.062c-.07.053-.135.108-.195.163l-.082.07c-.07.06-.135.122-.195.185l-.073.077c-.06.065-.115.131-.165.198l-.064.085c-.055.074-.105.15-.15.226l-.057.096c-.045.103-.085.208-.12.313l-.043.128c-.04.118-.075.238-.105.358l-.038.152c-.025.15-.055.3-.09.448l-.027.162c-.027.16-.045.321-.063.481l-.014.127c-.027.238-.039.478-.035.718l.005.278c.046.596.517 1.066 1.071 1.066.555 0 1.026-.47 1.072-1.066l.005-.278c.004-.24-.008-.48-.035-.718l-.014-.127c-.018-.16-.036-.321-.063-.481l-.027-.162c-.025-.15-.055-.3-.09-.448l-.038-.152c-.03-.12-.065-.24-.105-.358l-.043-.128c-.035-.105-.075-.21-.12-.313l-.05-.107c-.04-.086-.085-.172-.135-.257l-.057-.096c-.045-.076-.095-.152-.15-.226l-.064-.085c-.05-.067-.105-.133-.165-.198l-.073-.077c-.06-.063-.125-.125-.195-.185l-.082-.07c-.065-.055-.135-.11-.21-.163l-.09-.062c-.07-.048-.145-.095-.225-.14l-.1-.055c-.08-.044-.165-.087-.255-.128l-.11-.05c-.09-.04-.185-.078-.285-.114l-.12-.043c-.1-.035-.205-.068-.315-.1l-.13-.036c-.11-.03-.225-.058-.345-.084l-.14-.028c-.12-.023-.245-.044-.375-.062l-.15-.02c-.13-.016-.265-.03-.405-.042l-.16-.012c-.14-.01-.285-.018-.435-.024l-.17-.006c-.15-.004-.305-.006-.465-.006H3.5c-.16 0-.315.002-.465.006l-.17.006c-.15.006-.295.014-.435.024l-.16.012c-.14.012-.275.026-.405.042l-.15.02c-.13.018-.255.039-.375.062l-.14.028c-.12.026-.235.054-.345.084l-.13.036c-.11.032-.215.065-.315.1l-.12.043c-.1.036-.195.074-.285.114l-.11.05c-.09.041-.175.084-.255.128l-.1.055c-.08.045-.155.092-.225.14l-.09.062c-.07.053-.135.108-.195.163l-.082.07c-.07.06-.135.122-.195.185l-.073.077c-.06.065-.115.131-.165.198l-.064.085c-.055.074-.105.15-.15.226l-.057.096c-.045.103-.085.208-.12.313l-.043.128c-.04.118-.075.238-.105.358l-.038.152c-.025.15-.055.3-.09.448l-.027.162c-.027.16-.045.321-.063.481l-.014.127c-.027.238-.039.478-.035.718l.005.278c.046.596.517 1.066 1.071 1.066.555 0 1.026-.47 1.072-1.066z"/>
                         </svg>
                       </div>
                       <p className="mb-3">No expenses found.</p>
@@ -311,7 +250,6 @@ const ExpensesManagement: React.FC = () => {
                             <th>Property</th>
                             <th>Amount</th>
                             <th>Date</th>
-                            <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -326,17 +264,6 @@ const ExpensesManagement: React.FC = () => {
                               </td>
                               <td>{formatCurrency(expense.amount)}</td>
                               <td>{formatDate(expense.date)}</td>
-                              <td>
-                                <button
-                                  onClick={() => {
-                                    setExpense(expense);
-                                    setSearchId(expense.id.toString());
-                                  }}
-                                  className="btn btn-sm btn-outline-secondary"
-                                >
-                                  View
-                                </button>
-                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -356,102 +283,107 @@ const ExpensesManagement: React.FC = () => {
               <h5 className="mb-0">Find & Delete Expense</h5>
             </div>
             <div className="card-body">
-              {/* Search by Expense ID */}
-              <div className="mb-4">
-                <h6 className="mb-2">Search by Expense ID</h6>
-                <form onSubmit={handleSearchById}>
-                  <div className="input-group">
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Enter expense ID"
-                      value={searchId}
-                      onChange={(e) => setSearchId(e.target.value)}
-                      min="1"
-                      disabled={loadingSearch || deleteLoading}
-                    />
-                    <button 
-                      className="btn btn-primary"
-                      type="submit"
-                      disabled={loadingSearch || deleteLoading}
-                    >
-                      {loadingSearch && !searchPropertyId ? "Searching..." : "Search"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* Search by Property */}
-              <div className="mb-4">
-                <h6 className="mb-2">Search by Property</h6>
-                <form onSubmit={handleSearchByProperty}>
-                  <select
-                    className="form-select mb-2"
-                    value={searchPropertyId}
-                    onChange={(e) => setSearchPropertyId(e.target.value)}
-                    disabled={loadingProperties || loadingSearch || deleteLoading}
-                  >
-                    <option value="">-- Select a property --</option>
-                    {properties.map(property => (
-                      <option key={property.id} value={property.id}>
-                        {property.propertyName}
-                      </option>
-                    ))}
-                  </select>
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="input-group">
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Enter expense ID"
+                    value={expenseId}
+                    onChange={(e) => setExpenseId(e.target.value)}
+                    min="1"
+                    disabled={loadingSearch || deleteLoading}
+                    required
+                  />
                   <button 
-                    className="btn btn-primary w-100"
+                    className="btn btn-primary"
                     type="submit"
-                    disabled={loadingProperties || loadingSearch || deleteLoading}
+                    disabled={loadingSearch || deleteLoading}
                   >
-                    {loadingSearch && searchPropertyId ? "Searching..." : "Find Expense"}
+                    {loadingSearch ? "Searching..." : "Search"}
                   </button>
-                </form>
-              </div>
+                </div>
+              </form>
 
-              {/* Error Message */}
+              {/* Search Error */}
               {errorSearch && (
                 <div className="alert alert-danger" role="alert">
                   {errorSearch}
                 </div>
               )}
 
-              {/* Delete Success Message */}
+              {/* Delete Success */}
               {deleteSuccess && (
                 <div className="alert alert-success" role="alert">
                   {deleteSuccess}
                 </div>
               )}
 
-              {/* Expense Result */}
+              {/* Expense Details */}
               {expense && !deleteSuccess && (
                 <div className="border rounded p-3">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <h6 className="mb-0">Expense #{expense.id}</h6>
+                  <div className="text-center mb-3">
+                    <div className="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                      style={{ width: '60px', height: '60px', fontSize: '24px' }}>
+                      💰
+                    </div>
+                  </div>
+
+                  <div className="row g-2">
+                    <div className="col-12">
+                      <div className="d-flex justify-content-between">
+                        <strong>ID:</strong>
+                        <span className="text-primary">#{expense.id}</span>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div className="d-flex justify-content-between">
+                        <strong>Description:</strong>
+                        <span>{expense.description}</span>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div className="d-flex justify-content-between">
+                        <strong>Amount:</strong>
+                        <span>{formatCurrency(expense.amount)}</span>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div className="d-flex justify-content-between">
+                        <strong>Date:</strong>
+                        <span>{formatDate(expense.date)}</span>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div className="d-flex justify-content-between">
+                        <strong>Property:</strong>
+                        <Link to={`/properties/${expense.propertyId}`} className="text-decoration-none">
+                          {getPropertyName(expense.propertyId)}
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-top">
                     <button
-                      className="btn btn-danger btn-sm"
+                      className="btn btn-danger w-100"
                       onClick={handleDelete}
                       disabled={deleteLoading}
                     >
                       {deleteLoading ? (
                         <>
-                          <span className="spinner-border spinner-border-sm me-1"></span>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
                           Deleting...
                         </>
                       ) : (
-                        "Delete"
+                        'Delete Expense'
                       )}
                     </button>
                   </div>
-                  
-                  <p className="mb-1"><strong>Description:</strong> {expense.description}</p>
-                  <p className="mb-1"><strong>Amount:</strong> {formatCurrency(expense.amount)}</p>
-                  <p className="mb-1"><strong>Date:</strong> {formatDate(expense.date)}</p>
-                  <p className="mb-1">
-                    <strong>Property:</strong> 
-                    <Link to={`/properties/${expense.propertyId}`} className="ms-1">
-                      {getPropertyName(expense.propertyId)}
-                    </Link>
-                  </p>
                 </div>
               )}
 

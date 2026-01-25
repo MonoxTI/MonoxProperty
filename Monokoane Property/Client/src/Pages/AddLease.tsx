@@ -26,6 +26,7 @@ interface CreateLeaseRequest {
   rent: number;
   levy: number;
   bond: number;
+  rates: number;
 }
 
 interface ApiErrorResponse {
@@ -43,6 +44,7 @@ const AddLease: React.FC = () => {
   const [rent, setRent] = useState("");
   const [levy, setLevy] = useState("");
   const [bond, setBond] = useState("");
+  const [rates, setRates] = useState("");
 
   // Lookup data
   const [properties, setProperties] = useState<PropertyDto[]>([]);
@@ -110,6 +112,7 @@ const AddLease: React.FC = () => {
     const rentNum = parseFloat(rent);
     const levyNum = parseFloat(levy);
     const bondNum = parseFloat(bond);
+    const ratesNum = parseFloat(rates);
 
     if (isNaN(rentNum) || rentNum <= 0) {
       setError("Rent must be a positive amount");
@@ -123,6 +126,11 @@ const AddLease: React.FC = () => {
 
     if (isNaN(bondNum) || bondNum < 0) {
       setError("Bond must be zero or positive");
+      return;
+    }
+
+    if (isNaN(ratesNum) || ratesNum < 0) {
+      setError("Rates must be zero or positive");
       return;
     }
 
@@ -153,6 +161,7 @@ const AddLease: React.FC = () => {
       rent: rentNum,
       levy: levyNum,
       bond: bondNum,
+      rates: ratesNum
     };
 
     const token = localStorage.getItem("token");
@@ -352,6 +361,23 @@ const AddLease: React.FC = () => {
                       step="0.01"
                       required
                       placeholder="e.g. 17000.00"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="rates" className="form-label">
+                      Monthly Rates (R)
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control w-100"
+                      id="rates"
+                      value={rates}
+                      onChange={(e) => setRates(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      required
+                      placeholder="e.g. 1200.00"
                     />
                   </div>
 

@@ -98,7 +98,7 @@ public async Task<ActionResult<PropertyDto>> AddProperty([FromBody] PropertyDto 
             return Ok(new {message = "Property updated successfully."});
         }
 
-          [HttpDelete("delete")]//Delete
+          [HttpDelete("{propertyName}")]//Delete
         public async Task<IActionResult> DeleteProperty(string PropertyName)
         {
             var success = await services.DeleteProperty(PropertyName);

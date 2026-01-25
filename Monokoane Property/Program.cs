@@ -154,4 +154,13 @@ dotnet clean
 dotnet build
 dotnet run
 
+#Deleting data in database
+TRUNCATE TABLE
+    "Properties",
+    "Leases",
+    "Expenses",
+    "Payments"
+RESTART IDENTITY CASCADE;
+
+
 */

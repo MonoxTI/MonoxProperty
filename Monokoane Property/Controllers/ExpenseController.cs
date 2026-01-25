@@ -29,6 +29,7 @@ public class ExpenseController : ControllerBase
         return Ok(expenses);
     }
 
+    [HttpGet("{id:int}")]
      public async Task<ActionResult<ExpenseDto>> GetExpensebyId(int id)
         {
             var expense = await services.GetExpensebyId(id);
