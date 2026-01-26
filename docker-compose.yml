@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:latest
+    container_name: monokoane_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: MonokoaneDB
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - monokoane_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # .NET Backend API
+  api:
+    build:
+      context: ./Monokoane\ Property
+      dockerfile: Dockerfile
+    container_name: monokoane_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Server=postgres;Port=5432;Database=MonokoaneDB;User Id=postgres;Password=postgres;
+      - Jwt__Key=${JWT_KEY:-your-secret-key-change-in-production}
+      - Jwt__Issuer=${JWT_ISSUER:-http://localhost:5000}
+      - Jwt__Audience=${JWT_AUDIENCE:-MonokoaneProperty}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - monokoane_network
+    volumes:
+      - ./Monokoane\ Property:/app
+    restart: unless-stopped
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./Monokoane\ Property/Client
+      dockerfile: Dockerfile
+    container_name: monokoane_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    networks:
+      - monokoane_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  monokoane_network:
+    driver: bridge
