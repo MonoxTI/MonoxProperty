@@ -7,8 +7,8 @@ services:
     container_name: monokoane_postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: MonokoaneDB
+      POSTGRES_PASSWORD: Monokoane
+      POSTGRES_DB: MonoxProperty
     ports:
       - "5432:5432"
     volumes:
@@ -30,10 +30,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
-      - ConnectionStrings__DefaultConnection=Server=postgres;Port=5432;Database=MonokoaneDB;User Id=postgres;Password=postgres;
-      - Jwt__Key=${JWT_KEY:-your-secret-key-change-in-production}
-      - Jwt__Issuer=${JWT_ISSUER:-http://localhost:5000}
-      - Jwt__Audience=${JWT_AUDIENCE:-MonokoaneProperty}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=MonoxProperty;Username=postgres;Password=Monokoane
+      - Jwt__Key=k3V8f9X2mN0pQ7rT1yU4iO6aL5sD9gH2jK4lM8nB3vC7xZ1qW0eR
+      - Jwt__Issuer=MonoxPropertyUsers
+      - Jwt__Audience=JWT_AUDIENCE:MonokoaneProperty
     ports:
       - "5000:5000"
     depends_on:
