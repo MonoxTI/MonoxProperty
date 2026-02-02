@@ -91,16 +91,15 @@ namespace MonoxProperty.Services
         
         return report;
         }
+        // PaymentService.cs
+        public async Task<SummaryDto> GetMonthlySummaryAsync(int year)
+        {
+            if (year < 1 || year > 9999)
+            throw new ArgumentOutOfRangeException(nameof(year), "Year must be valid.");
+            
+            var startDate = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddYears(1); // Exclusive upper bound
 
-       // PaymentService.cs
-public async Task<SummaryDto> GetMonthlySummaryAsync(int year, int month)
-{
-    if (year < 1 || year > 9999 || month < 1 || month > 12)
-        throw new ArgumentOutOfRangeException(nameof(month), "Year and month must be valid.");
-    
-    var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
-    var endDate = startDate.AddMonths(1);
-    
     var rentTotal = await _db.Payments
         .Where(p => p.Type == PaymentType.Rent &&
                     p.PaymentDate >= startDate &&
@@ -119,7 +118,7 @@ public async Task<SummaryDto> GetMonthlySummaryAsync(int year, int month)
                     p.PaymentDate < endDate)
         .SumAsync(p => p.Amount);
 
-    var RatesTotal = await _db.Payments
+    var ratesTotal = await _db.Payments
         .Where(p => p.Type == PaymentType.Rates &&
                     p.PaymentDate >= startDate &&
                     p.PaymentDate < endDate)
@@ -130,21 +129,21 @@ public async Task<SummaryDto> GetMonthlySummaryAsync(int year, int month)
                     e.DateIncurred < endDate)
         .SumAsync(e => e.Amount);
 
-    // Calculate derived values
-    var totalIncome = rentTotal;
-    var profit = totalIncome - (bondTotal + totalExpenses + levyTotal + RatesTotal);
+    var totalIncome = rentTotal; // Only rent is income (assuming)
+    var totalOutgoings = bondTotal + levyTotal + ratesTotal + totalExpenses;
+    var profit = totalIncome - totalOutgoings;
 
-    // Return complete DTO with all properties set
     return new SummaryDto
     {
         Year = year,
-        Month = month,
+        
         TotalRent = rentTotal,
         TotalLevy = levyTotal,
         TotalBond = bondTotal,
+        TotalRates = ratesTotal, // Ensure SummaryDto has this property
         TotalExpenses = totalExpenses,
-        TotalIncome = totalIncome,  // ✅ Explicitly set
-        Profit = profit              // ✅ Explicitly set
+        TotalIncome = totalIncome,
+        Profit = profit
     };
 }
     }

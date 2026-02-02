@@ -1,54 +1,64 @@
 using ClosedXML.Excel;
 using MonoxProperty.Interfaces;
 using MonoxProperty.Dtos;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MonoxProperty.Services
 {
     public class ExcelService : IExcelExportService
     {
-        public byte[] ExportPropertyFinance(List<ExcelDto> data)
-{
-    // Handle null or empty data
-    if (data == null || data.Count == 0)
-    {
-        data = new List<ExcelDto> { new ExcelDto() };
-    }
+        public async Task<byte[]> ExportPropertyFinanceAsync(IEnumerable<ExcelDto> data)
+        {
+            var rows = data?.ToList() ?? new List<ExcelDto>();
 
-    using var workbook = new XLWorkbook();
-    var sheet = workbook.Worksheets.Add("Property Finance");
+            if (!rows.Any())
+            {
+                rows.Add(new ExcelDto());
+            }
 
-    // Headers
-    sheet.Cell(1, 1).Value = "Property Name";
-    sheet.Cell(1, 2).Value = "Rent";
-    sheet.Cell(1, 3).Value = "Levy";
-    sheet.Cell(1, 4).Value = "Bond";
-    sheet.Cell(1, 5).Value = "Expenses";
-    sheet.Cell(1, 6).Value = "Income";
-    sheet.Cell(1, 7).Value = "Profit";
+            using var workbook = new XLWorkbook();
+            var sheet = workbook.Worksheets.Add("Property Finance");
 
-    // Data rows
-    for (int i = 0; i < data.Count; i++)
-    {
-        int row = i + 2;
-        var item = data[i] ?? new ExcelDto(); // Handle null items
+            // Headers
+            sheet.Cell(1, 1).Value = "Property Name";
+            sheet.Cell(1, 2).Value = "Rent";
+            sheet.Cell(1, 3).Value = "Levy";
+            sheet.Cell(1, 4).Value = "Bond";
+            sheet.Cell(1, 5).Value = "Expenses";
+            sheet.Cell(1, 6).Value = "Profit";
 
-        sheet.Cell(row, 1).Value = item.PropertyName ?? "N/A";
-        sheet.Cell(row, 2).Value = item.Rent;
-        sheet.Cell(row, 3).Value = item.Levy;
-        sheet.Cell(row, 4).Value = item.Bond;
-        sheet.Cell(row, 5).Value = item.Expenses;
+            // Styling headers
+            sheet.Range(1, 1, 1, 6).Style.Font.Bold = true;
 
-        // Formulas
-        sheet.Cell(row, 6).FormulaA1 = $"=B{row}";
-        sheet.Cell(row, 7).FormulaA1 = $"=B{row}-(C{row}+D{row}+E{row})";
-    }
+            int row = 2;
 
-    sheet.Columns().AdjustToContents();
+            foreach (var item in rows)
+            {
+                sheet.Cell(row, 1).Value = item.PropertyName ?? "N/A";
+                sheet.Cell(row, 2).Value = item.Rent;
+                sheet.Cell(row, 3).Value = item.Levy;
+                sheet.Cell(row, 4).Value = item.Bond;
+                sheet.Cell(row, 5).Value = item.Expenses;
 
-    using var stream = new MemoryStream();
-    workbook.SaveAs(stream);
-    return stream.ToArray();
-}
+                // Profit formula
+                sheet.Cell(row, 6).FormulaA1 =
+                    $"=B{row}-(C{row}+D{row}+E{row})";
+
+                row++;
+            }
+
+            // Currency formatting
+            sheet.Columns(2, 6).Style.NumberFormat.Format = "R #,##0.00";
+
+            sheet.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+
+            return await Task.FromResult(stream.ToArray());
+        }
     }
 }

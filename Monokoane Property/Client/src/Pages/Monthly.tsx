@@ -279,6 +279,7 @@ const RecordPayment: React.FC = () => {
                       <option value={PaymentType.Rent}>Rent</option>
                       <option value={PaymentType.Levy}>Levy</option>
                       <option value={PaymentType.Bond}>Bond</option>
+                      <option value={PaymentType.Rates}>Rates</option>
                       <option value={PaymentType.Other}>Other</option>
                     </select>
                   </div>

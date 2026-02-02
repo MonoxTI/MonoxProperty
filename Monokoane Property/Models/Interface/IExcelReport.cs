@@ -4,6 +4,6 @@ namespace MonoxProperty.Interfaces
 {
 public interface IExcelExportService
 {
-    byte[] ExportPropertyFinance(List<ExcelDto> data);
+    Task<byte[]> ExportPropertyFinanceAsync(IEnumerable<ExcelDto> data);
 }
 }

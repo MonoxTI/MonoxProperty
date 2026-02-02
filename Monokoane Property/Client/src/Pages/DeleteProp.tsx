@@ -139,7 +139,7 @@ const PropertiesManagement: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       
-      const response = await fetch(`http://localhost:5153/api/property/${property.id}`, {
+      const response = await fetch(`http://localhost:5153/api/property/${property.propertyName}`, {
         method: "DELETE",
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
