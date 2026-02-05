@@ -54,7 +54,7 @@ namespace MonoxProperty.Services
             if (string.IsNullOrWhiteSpace(dto.Password))
                 throw new ArgumentException("Password is required.", nameof(dto.Password));
 
-            var email = dto.Email.Trim().ToLower();
+            var email = dto.Email.Trim().ToLower(); 
             var user = await _userRepo.GetByEmailAsync(email);
             
             // Prevent timing attacks

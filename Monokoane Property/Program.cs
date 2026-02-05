@@ -130,8 +130,6 @@ namespace MonoxProperty
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
-
             // ✅ CORS MUST come BEFORE UseRouting, UseAuthentication, etc.
             app.UseCors(); // Applies the default policy defined above
 

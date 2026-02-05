@@ -168,7 +168,7 @@ const PropertiesManagement: React.FC = () => {
       setTimeout(() => {
         const fetchProperties = async () => {
           try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');  
             const res = await fetch('http://localhost:5153/api/property', {
               headers: {
                 ...(token && { Authorization: `Bearer ${token}` }),
