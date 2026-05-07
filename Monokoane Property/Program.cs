@@ -84,7 +84,7 @@ namespace MonoxProperty
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173") // Vite default dev server
+                    policy.WithOrigins("http://localhost:5173","http://localhost:5174") // Vite default dev server
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials(); // Safe because origin is explicit
@@ -129,11 +129,10 @@ namespace MonoxProperty
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseRouting();
 
             // ✅ CORS MUST come BEFORE UseRouting, UseAuthentication, etc.
             app.UseCors(); // Applies the default policy defined above
-
-            app.UseRouting();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
             app.UseJwtLogging();
