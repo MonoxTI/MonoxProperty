@@ -97,5 +97,54 @@ namespace MonoxProperty.Services
 
             return await _excel.ExportPropertyFinanceAsync(excelData);
         }
+
+        public async Task<PropertyAnalyticsDto> GetAnalyticsAsync()
+{
+    var reports = await _db.PropertyReports
+        .OrderBy(r => r.Year)
+        .ThenBy(r => r.Month)
+        .ToListAsync();
+
+    // Profit by property
+    var profitByProperty = reports
+        .GroupBy(r => r.PropertyName)
+        .Select(g => new PropertyProfitSummary
+        {
+            PropertyName = g.Key,
+            TotalProfit = g.Sum(r => r.Profit),
+            AverageProfit = g.Average(r => r.Profit),
+            ReportCount = g.Count()
+        })
+        .OrderBy(p => p.TotalProfit)
+        .ToList();
+
+    // Monthly trend — one point per month, all properties
+    var monthlyTrend = reports
+        .GroupBy(r => new { r.Year, r.Month })
+        .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+        .Select(g => new MonthlyTrendPoint
+        {
+            Period = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"),
+            Properties = g.Select(r => new PropertyMonthProfit
+            {
+                PropertyName = r.PropertyName,
+                Profit = r.Profit
+            }).ToList()
+        })
+        .ToList();
+
+    // Underperforming = average profit is negative
+    var underperforming = profitByProperty
+        .Where(p => p.AverageProfit < 0)
+        .Select(p => p.PropertyName)
+        .ToList();
+
+    return new PropertyAnalyticsDto
+    {
+        ProfitByProperty = profitByProperty,
+        MonthlyTrend = monthlyTrend,
+        UnderperformingProperties = underperforming
+    };
+}
     }
 }

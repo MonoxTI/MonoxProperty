@@ -7,5 +7,6 @@ namespace MonoxProperty.Interfaces
         Task<byte[]> SaveAndExportAsync(SaveReportDto dto);
         Task<IEnumerable<ReportHistoryDto>> GetAllReportsAsync();
         Task<byte[]?> RedownloadReportAsync(int id);
+        Task<PropertyAnalyticsDto> GetAnalyticsAsync();
     }
 }

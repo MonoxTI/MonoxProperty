@@ -1,6 +1,7 @@
 // src/components/PropReport.tsx
 import { useState, useEffect } from "react";
 import api from "../API/axios";
+import Navigation from '../Nav'; 
 
 interface Property {
   propertyName: string;
@@ -148,7 +149,8 @@ export default function PropReport() {
 
   return (
     <div className="container-fluid py-3" style={{ maxWidth: '1400px' }}>
-      
+      <Navigation />  
+
       {/* Page header */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>Property Report</h4>

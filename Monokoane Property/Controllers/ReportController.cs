@@ -66,5 +66,13 @@ namespace MonoxProperty.Controllers
                 $"report_{id}.xlsx"
             );
         }
+
+        // GET /api/reports/analytics
+[HttpGet("analytics")]
+public async Task<IActionResult> GetAnalytics()
+{
+    var analytics = await _reportService.GetAnalyticsAsync();
+    return Ok(analytics);
+}
     }
 }
