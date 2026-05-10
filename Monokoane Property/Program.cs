@@ -57,6 +57,7 @@ namespace MonoxProperty
             builder.Services.AddScoped<IExcelExportService, ExcelService>();
             builder.Services.AddScoped<IExpenseService, ExpenseService>(); 
             builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<IPropertyReportService, PropertyReportService>();
 
 
             // JWT Authentication

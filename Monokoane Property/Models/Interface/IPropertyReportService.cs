@@ -1,0 +1,11 @@
+using MonoxProperty.Dtos;
+
+namespace MonoxProperty.Interfaces
+{
+    public interface IPropertyReportService
+    {
+        Task<byte[]> SaveAndExportAsync(SaveReportDto dto);
+        Task<IEnumerable<ReportHistoryDto>> GetAllReportsAsync();
+        Task<byte[]?> RedownloadReportAsync(int id);
+    }
+}

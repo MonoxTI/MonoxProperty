@@ -16,6 +16,7 @@ import PropertiesManagement from './Pages/DeleteProp.tsx';
 import ExpenseLookupDelete from './Pages/DeleteExpense.tsx';
 import RecordPayment from './Pages/Monthly.tsx';
 import HomeDashboard from './Pages/Home.tsx';
+import PropReport from './Pages/PropReport.tsx';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/add-rent-payment' element={<RecordPayment />} />
         <Route path='/home' element={<HomeDashboard />} />
+        <Route path='/reports' element={<PropReport />} />
       </Routes>
     </>
   );

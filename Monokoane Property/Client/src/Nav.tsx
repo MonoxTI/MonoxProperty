@@ -87,6 +87,11 @@ const Navigation: React.FC = () => {
                     Expense
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/reports">
+                  Reports
+                  </Link>
+                </li>
 
                 {/* Logout */}
                 <li className="nav-item">
