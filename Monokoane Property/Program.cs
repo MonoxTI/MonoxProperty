@@ -81,19 +81,20 @@ namespace MonoxProperty
                 });
 
             // ✅ CORS - Configure with explicit origin for React/Vite dev server
-            builder.Services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(policy =>
-                {
-                    policy.WithOrigins("http://localhost:5173",
-                    "http://localhost:5174",
-                    "https://monokoane-app.azurewebsites.net"
-                    )
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials(); // Safe because origin is explicit
-                });
-            });
+           builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "https://monokoane-app.azurewebsites.net"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
+});
 
             // =========================
             // BUILD THE APP
