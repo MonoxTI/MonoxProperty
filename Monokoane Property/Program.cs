@@ -85,7 +85,10 @@ namespace MonoxProperty
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173","http://localhost:5174") // Vite default dev server
+                    policy.WithOrigins("http://localhost:5173",
+                    "http://localhost:5174",
+                    "https://monokoane-app.azurewebsites.net"
+                    )
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials(); // Safe because origin is explicit

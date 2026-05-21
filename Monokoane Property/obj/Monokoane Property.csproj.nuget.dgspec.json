@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj": {}
+    "C:\\Projects\\GITHUB\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj": {}
   },
   "projects": {
-    "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj": {
+    "C:\\Projects\\GITHUB\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj",
+        "projectUniqueName": "C:\\Projects\\GITHUB\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj",
         "projectName": "Monokoane Property",
-        "projectPath": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj",
+        "projectPath": "C:\\Projects\\GITHUB\\MonoxProperty\\Monokoane Property\\Monokoane Property.csproj",
         "packagesPath": "C:\\Users\\itumo\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\itumo\\OneDrive\\Desktop\\Github Creation\\MonoxProperty\\Monokoane Property\\obj\\",
+        "outputPath": "C:\\Projects\\GITHUB\\MonoxProperty\\Monokoane Property\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

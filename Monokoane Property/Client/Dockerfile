@@ -6,6 +6,10 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+# Hardcode production API URL
+ENV VITE_API_URL=https://monokoane-api.azurewebsites.net/api
+
 RUN npm run build
 
 # Runtime stage
@@ -16,6 +20,6 @@ RUN npm install -g serve
 
 COPY --from=build /app/dist ./dist
 
-EXPOSE 5173
+EXPOSE 3000
 
-CMD ["serve", "-s", "dist", "-l", "5173"]
+CMD ["serve", "-s", "dist", "-l", "3000"]
