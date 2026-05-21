@@ -1,26 +1,22 @@
-// src/components/Login.tsx
+// src/Pages/Login.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../Nav';
+import api from '../API/axios';
 
 interface LoginDto {
   email: string;
   password: string;
 }
 
-// Handle both "token" and "jwt" responses from backend
 interface LoginResponse {
   token?: string;
   jwt?: string;
   message?: string;
-  // Add other fields if your backend returns them
 }
 
 const Login: React.FC = () => {
-  const [formData, setFormData] = useState<LoginDto>({
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState<LoginDto>({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -31,54 +27,23 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:5153/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+      const { data } = await api.post<LoginResponse>('/auth/login', formData);
 
-      // Handle non-OK responses with detailed errors
-      if (!response.ok) {
-        let errorMessage = `Login failed (${response.status})`;
-        
-        try {
-          // Try to parse error details from backend
-          const errorData = await response.json();
-          errorMessage = 
-            errorData.message || 
-            errorData.Message || 
-            errorData.title || 
-            errorData.error || 
-            errorMessage;
-        } catch (parseError) {
-          // If response isn't JSON (e.g., HTML error page), use status text
-          console.warn('Non-JSON error response:', await response.text());
-          errorMessage = `Login failed: ${response.status} ${response.statusText}`;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      // Parse successful response
-      const data: LoginResponse = await response.json();
-      console.log('Login response:', data);
-      
-      // Extract token (support both "token" and "jwt" fields)
       const token = data.token || data.jwt;
-      
+
       if (token) {
         localStorage.setItem('token', token);
-        console.log('Authentication token saved successfully');
         navigate('/home');
       } else {
-        throw new Error('Authentication succeeded but no token was returned. Check your API response structure.');
+        throw new Error('Login succeeded but no token was returned.');
       }
-      
     } catch (err: any) {
-      console.error('Login error details:', err);
-      setError(err.message || 'An unexpected error occurred. Please try again.');
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Login failed. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -132,11 +97,7 @@ const Login: React.FC = () => {
             >
               {loading ? (
                 <>
-                  <span
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
                   Logging in...
                 </>
               ) : (
