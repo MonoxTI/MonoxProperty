@@ -15,9 +15,6 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-# ✅ Tell ASP.NET to listen on port 80 so Azure App Service can reach it
-ENV ASPNETCORE_URLS=http://+:80
-
-EXPOSE 80
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "Monokoane Property.dll"]
