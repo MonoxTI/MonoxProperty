@@ -24,7 +24,6 @@ namespace MonoxProperty
             // SERVICES
             // =========================
 
-            // Add Controllers with JSON enum support
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
@@ -55,10 +54,8 @@ namespace MonoxProperty
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IExcelExportService, ExcelService>();
-            builder.Services.AddScoped<IExpenseService, ExpenseService>(); 
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<IPropertyReportService, PropertyReportService>();
-
 
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"]
@@ -80,21 +77,21 @@ namespace MonoxProperty
                     };
                 });
 
-            // ✅ CORS - Configure with explicit origin for React/Vite dev server
-           builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins(
-            "http://localhost:5173",
-            "http://localhost:5174",
-            "https://monokoane-app.azurewebsites.net"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
-    });
-});
+            // CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.WithOrigins(
+                        "http://localhost:5173",
+                        "http://localhost:5174",
+                        "https://monokoane-app.azurewebsites.net"
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+                });
+            });
 
             // =========================
             // BUILD THE APP
@@ -129,15 +126,15 @@ namespace MonoxProperty
             // =========================
             // MIDDLEWARE PIPELINE
             // =========================
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-            app.UseRouting();
 
-            // ✅ CORS MUST come BEFORE UseRouting, UseAuthentication, etc.
-            app.UseCors(); // Applies the default policy defined above
+            // ✅ Swagger enabled in all environments so live API can be tested
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
+            // ✅ CORS must come BEFORE UseRouting
+            app.UseCors();
+
+            app.UseRouting();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
             app.UseJwtLogging();
@@ -151,6 +148,7 @@ namespace MonoxProperty
         }
     }
 }
+
 /*
 dotnet clean
 dotnet build
@@ -163,6 +161,4 @@ TRUNCATE TABLE
     "Expenses",
     "Payments"
 RESTART IDENTITY CASCADE;
-
-
 */
