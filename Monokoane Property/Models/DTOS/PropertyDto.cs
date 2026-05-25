@@ -14,5 +14,6 @@ namespace MonoxProperty.Dtos
         public bool Occupied { get; set; }
         public List<LeaseDto> Leases { get; set; } = new();
         public List<ExpenseDto> Expenses { get; set; } = new();
+        public L
     }
 }

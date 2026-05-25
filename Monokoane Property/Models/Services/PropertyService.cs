@@ -40,32 +40,48 @@ namespace MonoxProperty.Services
 
         // Add new property
         public async Task<PropertyDto> AddProperty(PropertyDto dto)
-       {
-        if (dto == null)
+{
+    if (dto == null)
         throw new ArgumentNullException(nameof(dto));
 
-        if(dto.Apartments && dto.Units <= 0)
+    if (dto.Apartments && dto.Units <= 0)
+        throw new ArgumentException("Units must be greater than zero.");
+
+    var propertyName = dto.PropertyName?.Trim();
+    if (string.IsNullOrWhiteSpace(propertyName))
+        throw new ArgumentException("Property name is required.");
+
+    var existing = await _repo.GetByName(propertyName);
+    if (existing != null)
+        throw new DuplicateEntityException(propertyName);
+
+    var property = _mapper.Map<Property>(dto);
+    property.PropertyName = propertyName;
+
+    // 🚀 Create unit properties
+    if (dto.Apartments)
+    {
+        for (int i = 1; i <= dto.Units; i++)
         {
-            throw new ArgumentException("Units must be greater than zero for apartment properties.", nameof(dto.Units));
-        }
-        else if (!dto.Apartments && dto.Units != 1)
-        {
-            throw new ArgumentException("Non-apartment properties.");
+            var unit = new Property
+            {
+                PropertyName = $"{propertyName} Unit {i}",
+                Location = property.Location,
+                Apartments = false,
+                Parent = property
+            };
+
+            property.UnitsList.Add(unit);
         }
 
-        var propertyName = dto.PropertyName?.Trim();
-        if (string.IsNullOrWhiteSpace(propertyName))
-        throw new ArgumentException("Property name is required.", nameof(dto.PropertyName));
-        
-        var existing = await _repo.GetByName(propertyName);
-        if (existing != null)
-        throw new DuplicateEntityException(propertyName);
-        
-        var property = _mapper.Map<Property>(dto);
-        property.PropertyName = propertyName; // Ensure normalized name is saved
-        var newProperty = await _repo.AddAsync(property);
-        return _mapper.Map<PropertyDto>(newProperty);
-        }
+        // Optional: clear Units count (since units are now real records)
+        property.Units = dto.Units;
+    }
+
+    var newProperty = await _repo.AddAsync(property);
+
+    return _mapper.Map<PropertyDto>(newProperty);
+}
        
         
         // Update property
