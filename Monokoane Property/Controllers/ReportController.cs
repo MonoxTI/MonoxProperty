@@ -17,6 +17,32 @@ namespace MonoxProperty.Controllers
             _reportService = reportService;
         }
 
+        // POST /api/reports/save
+        [HttpPost("save")]
+public async Task<IActionResult> Save([FromBody] SaveReport dto)
+{
+    if (string.IsNullOrWhiteSpace(dto.PropertyName))
+        return BadRequest(new { error = "Property name is required." });
+
+    if (dto.Month < 1 || dto.Month > 12)
+        return BadRequest(new { error = "Month must be between 1 and 12." });
+
+    if (dto.Year < 2000 || dto.Year > 2100)
+        return BadRequest(new { error = "Invalid year." });
+
+    await _reportService.SaveAsync(dto);
+
+    var monthName = new DateTime(dto.Year, dto.Month, 1).ToString("MMMM_yyyy");
+
+    return Ok(new
+    {
+        message = "Report saved successfully",
+        property = dto.PropertyName,
+        period = monthName
+    });
+}
+
+
         // POST /api/reports/save-export
         // Saves the report to DB and returns the Excel file
         [HttpPost("save-export")]

@@ -1,5 +1,5 @@
 // src/components/PropReport.tsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../API/axios";
 import Navigation from '../Nav'; 
 
@@ -85,9 +85,47 @@ export default function PropReport() {
     setSuccess(null);
   };
 
+  const handleSave = async (e: React.FormEvent) => {
+
+    e.preventDefault()
+    if (!form.propertyName) return setError("Please select a property.");
+    if (!form.month || !form.year)
+  return setError("Please select month and year.");
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+     try {
+      const payload = {
+        propertyName: form.propertyName,
+        month: Number(form.month),
+        year: Number(form.year),
+        rent,
+        levy,
+        bond,
+        rates,
+        expenses,
+      };
+
+      const res = await api.post("/reports/save", payload, {
+      
+      });
+
+      setSuccess(res.data.message || "Saved successfully");
+fetchReports();
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "Failed to generate report. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.propertyName) return setError("Please select a property.");
+    if (!form.month || !form.year)
+  return setError("Please select month and year.");
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -279,18 +317,23 @@ export default function PropReport() {
               </div>
             )}
 
-            <button 
-              type="submit" 
-              disabled={submitting} 
-              className="btn btn-primary w-100"
-            >
-              {submitting ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Generating...
-                </>
-              ) : "Generate & Download Report"}
-            </button>
+            <button
+  type="button"
+  onClick={handleSave}
+  disabled={submitting}
+  className="btn btn-primary w-100"
+>
+  Save Report
+</button>
+
+<button
+  type="button"
+  onClick={handleSubmit}
+  disabled={submitting}
+  className="btn btn-success w-100 mt-2"
+>
+  Generate & Download Report
+</button>
           </form>
         </div>
       </div>

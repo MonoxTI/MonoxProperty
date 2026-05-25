@@ -16,6 +16,27 @@ namespace MonoxProperty.Services
             _excel = excel;
         }
 
+        public async Task<byte[]> SaveAsync(SaveReportDto dto)
+        {
+            var profit = dto.Rent - (dto.Levy + dto.Bond + dto.Rates + dto.Expenses)
+            var report = new PropertyReport
+            {
+                PropertyName = dto.PropertyName,
+                Month = dto.Month,
+                Year = dto.Year,
+                Rent = dto.Rent,
+                Levy = dto.Levy,
+                Bond = dto.Bond,
+                Rates = dto.Rates,
+                Expenses = dto.Expenses,
+                Profit = profit,
+                CreatedAt = DateTime.UtcNow   
+            };
+
+            _db.PropertyReports.Add(report);
+            await _db.SaveChangesAsync();
+        }
+
         public async Task<byte[]> SaveAndExportAsync(SaveReportDto dto)
         {
             var profit = dto.Rent - (dto.Levy + dto.Bond + dto.Rates + dto.Expenses);
