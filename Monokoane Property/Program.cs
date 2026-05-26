@@ -31,24 +31,8 @@ namespace MonoxProperty
                 });
 
             builder.Services.AddEndpointsApiExplorer();
-            //builder.Services.AddSwaggerGen();
-            builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo 
-    { 
-        Title = "Monokoane Property", 
-        Version = "v1" 
-    });
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter JWT token",
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "bearer"
-    });
-});
+            builder.Services.AddSwaggerGen();
+            
 
             // DbContext
             builder.Services.AddDbContext<ApplicationDB>(options =>

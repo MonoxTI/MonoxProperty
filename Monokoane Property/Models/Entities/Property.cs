@@ -28,7 +28,9 @@ namespace MonoxProperty.Entities
     public decimal Levy { get; set; }
     public decimal Bond { get; set; }
     public decimal Rates { get; set; }
-
+    public int Units { get; set; }
+    
+    public ICollection<Property> UnitsList { get; set; } = new List<Property>(); // stores the actual unit records
     public ICollection<Lease>? Leases { get; set; } = new List<Lease>();
     public ICollection<Expense>? Expenses { get; set; }
 }
