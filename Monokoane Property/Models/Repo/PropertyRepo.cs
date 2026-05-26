@@ -16,7 +16,9 @@ namespace MonoxProperty.Repository
 
         public async Task<IEnumerable<Property>> GetAllAsync()
         {
-            return await _context.Properties
+              return await _context.Properties
+                .Where(p => p.ParentId == null)
+                .Include(p => p.UnitsList)
                 .ToListAsync();
         }
 
@@ -25,7 +27,8 @@ namespace MonoxProperty.Repository
             return await _context.Properties
                 .Include(p => p.Expenses)
                 .Include(p => p.Leases)
-                .ThenInclude(l => l.Tenant)
+                    .ThenInclude(l => l.Tenant)
+                .Include(p => p.UnitsList)
                 .FirstOrDefaultAsync(p => p.PropertyName.ToLower() == propertyName.ToLower());
         }
       

@@ -16,9 +16,11 @@ namespace MonoxProperty.Services
             _excel = excel;
         }
 
-        public async Task<byte[]> SaveAsync(SaveReportDto dto)
+        // Save only — no Excel file returned
+        public async Task SaveAsync(SaveReportDto dto)
         {
-            var profit = dto.Rent - (dto.Levy + dto.Bond + dto.Rates + dto.Expenses)
+            var profit = dto.Rent - (dto.Levy + dto.Bond + dto.Rates + dto.Expenses);
+
             var report = new PropertyReport
             {
                 PropertyName = dto.PropertyName,
@@ -30,13 +32,14 @@ namespace MonoxProperty.Services
                 Rates = dto.Rates,
                 Expenses = dto.Expenses,
                 Profit = profit,
-                CreatedAt = DateTime.UtcNow   
+                CreatedAt = DateTime.UtcNow
             };
 
             _db.PropertyReports.Add(report);
             await _db.SaveChangesAsync();
         }
 
+        // Save + return Excel bytes
         public async Task<byte[]> SaveAndExportAsync(SaveReportDto dto)
         {
             var profit = dto.Rent - (dto.Levy + dto.Bond + dto.Rates + dto.Expenses);
@@ -120,52 +123,49 @@ namespace MonoxProperty.Services
         }
 
         public async Task<PropertyAnalyticsDto> GetAnalyticsAsync()
-{
-    var reports = await _db.PropertyReports
-        .OrderBy(r => r.Year)
-        .ThenBy(r => r.Month)
-        .ToListAsync();
-
-    // Profit by property
-    var profitByProperty = reports
-        .GroupBy(r => r.PropertyName)
-        .Select(g => new PropertyProfitSummary
         {
-            PropertyName = g.Key,
-            TotalProfit = g.Sum(r => r.Profit),
-            AverageProfit = g.Average(r => r.Profit),
-            ReportCount = g.Count()
-        })
-        .OrderBy(p => p.TotalProfit)
-        .ToList();
+            var reports = await _db.PropertyReports
+                .OrderBy(r => r.Year)
+                .ThenBy(r => r.Month)
+                .ToListAsync();
 
-    // Monthly trend — one point per month, all properties
-    var monthlyTrend = reports
-        .GroupBy(r => new { r.Year, r.Month })
-        .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
-        .Select(g => new MonthlyTrendPoint
-        {
-            Period = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"),
-            Properties = g.Select(r => new PropertyMonthProfit
+            var profitByProperty = reports
+                .GroupBy(r => r.PropertyName)
+                .Select(g => new PropertyProfitSummary
+                {
+                    PropertyName = g.Key,
+                    TotalProfit = g.Sum(r => r.Profit),
+                    AverageProfit = g.Average(r => r.Profit),
+                    ReportCount = g.Count()
+                })
+                .OrderBy(p => p.TotalProfit)
+                .ToList();
+
+            var monthlyTrend = reports
+                .GroupBy(r => new { r.Year, r.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                .Select(g => new MonthlyTrendPoint
+                {
+                    Period = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"),
+                    Properties = g.Select(r => new PropertyMonthProfit
+                    {
+                        PropertyName = r.PropertyName,
+                        Profit = r.Profit
+                    }).ToList()
+                })
+                .ToList();
+
+            var underperforming = profitByProperty
+                .Where(p => p.AverageProfit < 0)
+                .Select(p => p.PropertyName)
+                .ToList();
+
+            return new PropertyAnalyticsDto
             {
-                PropertyName = r.PropertyName,
-                Profit = r.Profit
-            }).ToList()
-        })
-        .ToList();
-
-    // Underperforming = average profit is negative
-    var underperforming = profitByProperty
-        .Where(p => p.AverageProfit < 0)
-        .Select(p => p.PropertyName)
-        .ToList();
-
-    return new PropertyAnalyticsDto
-    {
-        ProfitByProperty = profitByProperty,
-        MonthlyTrend = monthlyTrend,
-        UnderperformingProperties = underperforming
-    };
-}
+                ProfitByProperty = profitByProperty,
+                MonthlyTrend = monthlyTrend,
+                UnderperformingProperties = underperforming
+            };
+        }
     }
 }

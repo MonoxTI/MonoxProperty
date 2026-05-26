@@ -3,7 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../API/axios';
 
-interface PropertyDto { id: number; propertyName: string; location: string; apartments: boolean; units: number; occupied: boolean; leases: any[]; expenses: any[]; }
+interface PropertyDto {
+  id: number;
+  propertyName: string;
+  location: string;
+  apartments: boolean;
+  units: number;
+  occupied: boolean;
+  unitsList?: any[];
+}
 
 const AllProperties: React.FC = () => {
   const [properties, setProperties] = useState<PropertyDto[]>([]);
@@ -37,12 +45,28 @@ const AllProperties: React.FC = () => {
                   <thead className="table-light"><tr><th>ID</th><th>Name</th><th>Location</th><th>Units</th><th>Type</th><th>Status</th></tr></thead>
                   <tbody>
                     {properties.map(p => (
-                      <tr key={p.id} className="align-middle">
-                        <td>#{p.id}</td><td>{p.propertyName}</td><td>{p.location}</td><td>{p.units}</td>
-                        <td>{p.apartments ? 'Apartments' : 'Single Unit'}</td>
-                        <td><span className={`badge ${p.occupied ? 'bg-success' : 'bg-secondary'}`}>{p.occupied ? 'Occupied' : 'Vacant'}</span></td>
-                      </tr>
-                    ))}
+  <React.Fragment key={p.id}>
+    <tr className="align-middle">
+      <td>#{p.id}</td>
+      <td><strong>{p.propertyName}</strong></td>
+      <td>{p.location}</td>
+      <td>{p.units}</td>
+      <td>{p.apartments ? 'Apartments' : 'Single Unit'}</td>
+      <td><span className={`badge ${p.occupied ? 'bg-success' : 'bg-secondary'}`}>{p.occupied ? 'Occupied' : 'Vacant'}</span></td>
+    </tr>
+    {/* Show units indented below parent */}
+    {p.unitsList?.map((unit: any) => (
+      <tr key={unit.id} className="align-middle table-light">
+        <td className="ps-4 text-muted">↳ #{unit.id}</td>
+        <td className="ps-4 text-muted">{unit.propertyName}</td>
+        <td className="text-muted">{unit.location}</td>
+        <td>—</td>
+        <td><span className="badge bg-light text-dark">Unit</span></td>
+        <td><span className={`badge ${unit.occupied ? 'bg-success' : 'bg-secondary'}`}>{unit.occupied ? 'Occupied' : 'Vacant'}</span></td>
+      </tr>
+    ))}
+  </React.Fragment>
+))}
                   </tbody>
                 </table>
               </div>

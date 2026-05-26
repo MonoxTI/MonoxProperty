@@ -17,34 +17,30 @@ namespace MonoxProperty.Controllers
             _reportService = reportService;
         }
 
-        // POST /api/reports/save
+        // POST /api/reports/save — saves to DB, no file download
         [HttpPost("save")]
-public async Task<IActionResult> Save([FromBody] SaveReport dto)
-{
-    if (string.IsNullOrWhiteSpace(dto.PropertyName))
-        return BadRequest(new { error = "Property name is required." });
+        public async Task<IActionResult> Save([FromBody] SaveReportDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.PropertyName))
+                return BadRequest(new { error = "Property name is required." });
 
-    if (dto.Month < 1 || dto.Month > 12)
-        return BadRequest(new { error = "Month must be between 1 and 12." });
+            if (dto.Month < 1 || dto.Month > 12)
+                return BadRequest(new { error = "Month must be between 1 and 12." });
 
-    if (dto.Year < 2000 || dto.Year > 2100)
-        return BadRequest(new { error = "Invalid year." });
+            if (dto.Year < 2000 || dto.Year > 2100)
+                return BadRequest(new { error = "Invalid year." });
 
-    await _reportService.SaveAsync(dto);
+            await _reportService.SaveAsync(dto);
 
-    var monthName = new DateTime(dto.Year, dto.Month, 1).ToString("MMMM_yyyy");
+            var monthName = new DateTime(dto.Year, dto.Month, 1).ToString("MMMM yyyy");
 
-    return Ok(new
-    {
-        message = "Report saved successfully",
-        property = dto.PropertyName,
-        period = monthName
-    });
-}
+            return Ok(new
+            {
+                message = $"Report for {dto.PropertyName} ({monthName}) saved successfully."
+            });
+        }
 
-
-        // POST /api/reports/save-export
-        // Saves the report to DB and returns the Excel file
+        // POST /api/reports/save-export — saves to DB and returns Excel file
         [HttpPost("save-export")]
         public async Task<IActionResult> SaveAndExport([FromBody] SaveReportDto dto)
         {
@@ -68,8 +64,7 @@ public async Task<IActionResult> Save([FromBody] SaveReport dto)
             );
         }
 
-        // GET /api/reports
-        // Returns all saved reports for the history table
+        // GET /api/reports — returns all saved reports
         [HttpGet]
         public async Task<IActionResult> GetAllReports()
         {
@@ -77,8 +72,7 @@ public async Task<IActionResult> Save([FromBody] SaveReport dto)
             return Ok(reports);
         }
 
-        // GET /api/reports/{id}/download
-        // Re-downloads a past report by its DB id
+        // GET /api/reports/{id}/download — re-download a past report
         [HttpGet("{id}/download")]
         public async Task<IActionResult> RedownloadReport(int id)
         {
@@ -94,11 +88,11 @@ public async Task<IActionResult> Save([FromBody] SaveReport dto)
         }
 
         // GET /api/reports/analytics
-[HttpGet("analytics")]
-public async Task<IActionResult> GetAnalytics()
-{
-    var analytics = await _reportService.GetAnalyticsAsync();
-    return Ok(analytics);
-}
+        [HttpGet("analytics")]
+        public async Task<IActionResult> GetAnalytics()
+        {
+            var analytics = await _reportService.GetAnalyticsAsync();
+            return Ok(analytics);
+        }
     }
 }

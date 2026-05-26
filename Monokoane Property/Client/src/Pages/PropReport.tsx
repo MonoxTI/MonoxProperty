@@ -1,40 +1,20 @@
-// src/components/PropReport.tsx
+// src/Pages/PropReport.tsx
 import React, { useState, useEffect } from "react";
 import api from "../API/axios";
-import Navigation from '../Nav'; 
+import Navigation from '../Nav';
 
-interface Property {
-  propertyName: string;
-}
+interface Property { propertyName: string; }
 
 interface ReportHistory {
-  id: number;
-  propertyName: string;
-  month: number;
-  year: number;
-  rent: number;
-  levy: number;
-  bond: number;
-  rates: number;
-  expenses: number;
-  profit: number;
-  createdAt: string;
+  id: number; propertyName: string; month: number; year: number;
+  rent: number; levy: number; bond: number; rates: number;
+  expenses: number; profit: number; createdAt: string;
 }
 
-const MONTHS = [
-  "Jan","Feb","Mar","Apr","May","Jun",
-  "Jul","Aug","Sep","Oct","Nov","Dec"
-];
-
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-ZA", { 
-    style: "currency", 
-    currency: "ZAR", 
-    minimumFractionDigits: 2 
-  }).format(n);
+const fmt = (n: number) => new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", minimumFractionDigits: 2 }).format(n);
 
 export default function PropReport() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -45,14 +25,8 @@ export default function PropReport() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    propertyName: "",
-    month: new Date().getMonth() + 1,
-    year: currentYear,
-    rent: "",
-    levy: "",
-    bond: "",
-    rates: "",
-    expenses: "",
+    propertyName: "", month: new Date().getMonth() + 1, year: currentYear,
+    rent: "", levy: "", bond: "", rates: "", expenses: "",
   });
 
   const rent = parseFloat(form.rent) || 0;
@@ -63,110 +37,65 @@ export default function PropReport() {
   const profit = rent - (levy + bond + rates + expenses);
 
   useEffect(() => {
-    api.get("/property").then((res) => setProperties(res.data)).catch(() => {});
+    api.get("/property").then(res => setProperties(res.data)).catch(() => {});
     fetchReports();
   }, []);
 
   const fetchReports = async () => {
     setLoadingReports(true);
-    try {
-      const res = await api.get("/reports");
-      setReports(res.data);
-    } catch {
-      // silently fail — table just stays empty
-    } finally {
-      setLoadingReports(false);
-    }
+    try { const res = await api.get("/reports"); setReports(res.data); }
+    catch { } finally { setLoadingReports(false); }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    setError(null);
-    setSuccess(null);
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError(null); setSuccess(null);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-
-    e.preventDefault()
-    if (!form.propertyName) return setError("Please select a property.");
-    if (!form.month || !form.year)
-  return setError("Please select month and year.");
-    setSubmitting(true);
-    setError(null);
-    setSuccess(null);
-
-     try {
-      const payload = {
-        propertyName: form.propertyName,
-        month: Number(form.month),
-        year: Number(form.year),
-        rent,
-        levy,
-        bond,
-        rates,
-        expenses,
-      };
-
-      const res = await api.post("/reports/save", payload, {
-      
-      });
-
-      setSuccess(res.data.message || "Saved successfully");
-fetchReports();
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Failed to generate report. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+  const validate = () => {
+    if (!form.propertyName) { setError("Please select a property."); return false; }
+    if (!form.month || !form.year) { setError("Please select month and year."); return false; }
+    return true;
   };
-  
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.propertyName) return setError("Please select a property.");
-    if (!form.month || !form.year)
-  return setError("Please select month and year.");
-    setSubmitting(true);
-    setError(null);
-    setSuccess(null);
+  const buildPayload = () => ({
+    propertyName: form.propertyName,
+    month: Number(form.month),
+    year: Number(form.year),
+    rent, levy, bond, rates, expenses,
+  });
 
+  // Save only — no download
+  const handleSave = async () => {
+    if (!validate()) return;
+    setSubmitting(true); setError(null); setSuccess(null);
     try {
-      const payload = {
-        propertyName: form.propertyName,
-        month: Number(form.month),
-        year: Number(form.year),
-        rent,
-        levy,
-        bond,
-        rates,
-        expenses,
-      };
+      const res = await api.post("/reports/save", buildPayload());
+      setSuccess(res.data.message || "Report saved successfully.");
+      fetchReports();
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "Failed to save report.");
+    } finally { setSubmitting(false); }
+  };
 
-      const res = await api.post("/reports/save-export", payload, {
-        responseType: "blob",
-      });
-
-      // Trigger file download
+  // Save + download Excel
+  const handleExport = async () => {
+    if (!validate()) return;
+    setSubmitting(true); setError(null); setSuccess(null);
+    try {
+      const res = await api.post("/reports/save-export", buildPayload(), { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
-      const monthName = MONTHS[Number(form.month) - 1];
-      link.setAttribute("download", `${form.propertyName}_${monthName}_${form.year}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      link.setAttribute("download", `${form.propertyName}_${MONTHS[Number(form.month) - 1]}_${form.year}.xlsx`);
+      document.body.appendChild(link); link.click(); link.remove();
       window.URL.revokeObjectURL(url);
-
       setSuccess("Report saved and downloaded successfully.");
       fetchReports();
-
-      // Reset amounts only, keep property/month/year
-      setForm((prev) => ({ ...prev, rent: "", levy: "", bond: "", rates: "", expenses: "" }));
+      setForm(prev => ({ ...prev, rent: "", levy: "", bond: "", rates: "", expenses: "" }));
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Failed to generate report. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+      setError(err?.response?.data?.error || "Failed to generate report.");
+    } finally { setSubmitting(false); }
   };
 
   const handleRedownload = async (report: ReportHistory) => {
@@ -176,165 +105,92 @@ fetchReports();
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", `${report.propertyName}_${MONTHS[report.month - 1]}_${report.year}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      document.body.appendChild(link); link.click(); link.remove();
       window.URL.revokeObjectURL(url);
-    } catch {
-      alert("Failed to download report.");
-    }
+    } catch { alert("Failed to download report."); }
   };
 
   return (
     <div className="container-fluid py-3" style={{ maxWidth: '1400px' }}>
-      <Navigation />  
+      <Navigation />
 
-      {/* Page header */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>Property Report</h4>
-        <span className="badge bg-secondary">
-          {MONTHS[form.month - 1]} {form.year}
-        </span>
+        <span className="badge bg-secondary">{MONTHS[form.month - 1]} {form.year}</span>
       </div>
 
-      {/* Form card */}
       <div className="card shadow-sm mb-4">
-        <div className="card-header">
-          <h6 className="mb-0">Generate Monthly Report</h6>
-        </div>
+        <div className="card-header"><h6 className="mb-0">Generate Monthly Report</h6></div>
         <div className="card-body">
-          <form onSubmit={handleSubmit}>
-            
-            {/* Row 1: Property + Month + Year */}
-            <div className="row g-3 mb-3">
-              <div className="col-12 col-md-4">
-                <label className="form-label small text-muted text-uppercase fw-semibold">
-                  Property
-                </label>
-                <select 
-                  name="propertyName" 
-                  value={form.propertyName} 
-                  onChange={handleChange} 
-                  className="form-select" 
-                  required
-                >
-                  <option value="">Select property</option>
-                  {properties.map((p) => (
-                    <option key={p.propertyName} value={p.propertyName}>
-                      {p.propertyName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-6 col-md-4">
-                <label className="form-label small text-muted text-uppercase fw-semibold">
-                  Month
-                </label>
-                <select 
-                  name="month" 
-                  value={form.month} 
-                  onChange={handleChange} 
-                  className="form-select"
-                >
-                  {MONTHS.map((m, i) => (
-                    <option key={m} value={i + 1}>{m}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-6 col-md-4">
-                <label className="form-label small text-muted text-uppercase fw-semibold">
-                  Year
-                </label>
-                <select 
-                  name="year" 
-                  value={form.year} 
-                  onChange={handleChange} 
-                  className="form-select"
-                >
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
+
+          {/* Row 1: Property + Month + Year */}
+          <div className="row g-3 mb-3">
+            <div className="col-12 col-md-4">
+              <label className="form-label small text-muted text-uppercase fw-semibold">Property</label>
+              <select name="propertyName" value={form.propertyName} onChange={handleChange} className="form-select" required>
+                <option value="">Select property</option>
+                {properties.map(p => <option key={p.propertyName} value={p.propertyName}>{p.propertyName}</option>)}
+              </select>
             </div>
-
-            {/* Row 2: Amounts */}
-            <div className="row g-3 mb-3">
-              {[
-                { name: "rent", label: "Rent (R)" },
-                { name: "levy", label: "Levy (R)" },
-                { name: "bond", label: "Bond (R)" },
-                { name: "rates", label: "Rates (R)" },
-                { name: "expenses", label: "Expenses (R)" },
-              ].map(({ name, label }) => (
-                <div className="col-6 col-md" key={name}>
-                  <label className="form-label small text-muted text-uppercase fw-semibold">
-                    {label}
-                  </label>
-                  <input
-                    type="number"
-                    name={name}
-                    value={(form as any)[name]}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    className="form-control"
-                  />
-                </div>
-              ))}
+            <div className="col-6 col-md-4">
+              <label className="form-label small text-muted text-uppercase fw-semibold">Month</label>
+              <select name="month" value={form.month} onChange={handleChange} className="form-select">
+                {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
             </div>
-
-            {/* Profit preview */}
-            <div className={`alert mb-3 ${profit >= 0 ? 'alert-success' : 'alert-danger'}`}>
-              <div className="d-flex justify-content-between align-items-center">
-                <span className="small text-muted">Projected Profit</span>
-                <span className={`fw-bold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>
-                  {fmt(profit)}
-                </span>
-              </div>
+            <div className="col-6 col-md-4">
+              <label className="form-label small text-muted text-uppercase fw-semibold">Year</label>
+              <select name="year" value={form.year} onChange={handleChange} className="form-select">
+                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
             </div>
+          </div>
 
-            {/* Feedback alerts */}
-            {error && (
-              <div className="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-                {error}
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setError(null)}
-                ></button>
+          {/* Row 2: Amounts */}
+          <div className="row g-3 mb-3">
+            {[{ name: "rent", label: "Rent (R)" }, { name: "levy", label: "Levy (R)" },
+              { name: "bond", label: "Bond (R)" }, { name: "rates", label: "Rates (R)" },
+              { name: "expenses", label: "Expenses (R)" }].map(({ name, label }) => (
+              <div className="col-6 col-md" key={name}>
+                <label className="form-label small text-muted text-uppercase fw-semibold">{label}</label>
+                <input type="number" name={name} value={(form as any)[name]} onChange={handleChange}
+                  placeholder="0.00" min="0" step="0.01" className="form-control" />
               </div>
-            )}
-            {success && (
-              <div className="alert alert-success alert-dismissible fade show mb-3" role="alert">
-                {success}
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setSuccess(null)}
-                ></button>
-              </div>
-            )}
+            ))}
+          </div>
 
-            <button
-  type="button"
-  onClick={handleSave}
-  disabled={submitting}
-  className="btn btn-primary w-100"
->
-  Save Report
-</button>
+          {/* Profit preview */}
+          <div className={`alert mb-3 ${profit >= 0 ? 'alert-success' : 'alert-danger'}`}>
+            <div className="d-flex justify-content-between align-items-center">
+              <span className="small text-muted">Projected Profit</span>
+              <span className={`fw-bold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>{fmt(profit)}</span>
+            </div>
+          </div>
 
-<button
-  type="button"
-  onClick={handleSubmit}
-  disabled={submitting}
-  className="btn btn-success w-100 mt-2"
->
-  Generate & Download Report
-</button>
-          </form>
+          {error && (
+            <div className="alert alert-danger alert-dismissible fade show mb-3">
+              {error}<button type="button" className="btn-close" onClick={() => setError(null)} />
+            </div>
+          )}
+          {success && (
+            <div className="alert alert-success alert-dismissible fade show mb-3">
+              {success}<button type="button" className="btn-close" onClick={() => setSuccess(null)} />
+            </div>
+          )}
+
+          {/* Two separate action buttons */}
+          <div className="row g-2">
+            <div className="col-12 col-md-6">
+              <button type="button" onClick={handleSave} disabled={submitting} className="btn btn-primary w-100">
+                {submitting ? <><span className="spinner-border spinner-border-sm me-2" />Saving...</> : '💾 Save Report'}
+              </button>
+            </div>
+            <div className="col-12 col-md-6">
+              <button type="button" onClick={handleExport} disabled={submitting} className="btn btn-success w-100">
+                {submitting ? <><span className="spinner-border spinner-border-sm me-2" />Generating...</> : '📥 Save & Download Excel'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -342,65 +198,39 @@ fetchReports();
       <div className="card shadow-sm">
         <div className="card-header d-flex justify-content-between align-items-center">
           <h6 className="mb-0">Past Reports ({reports.length})</h6>
-          <button 
-            onClick={fetchReports} 
-            className="btn btn-sm btn-outline-secondary"
-            disabled={loadingReports}
-          >
+          <button onClick={fetchReports} className="btn btn-sm btn-outline-secondary" disabled={loadingReports}>
             {loadingReports ? 'Refreshing...' : '↻ Refresh'}
           </button>
         </div>
         <div className="table-responsive">
           {loadingReports ? (
-            <div className="text-center py-4">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
+            <div className="text-center py-4"><div className="spinner-border text-primary" role="status" /></div>
           ) : reports.length === 0 ? (
-            <div className="text-center py-4 text-muted">
-              No reports yet. Generate your first report above.
-            </div>
+            <div className="text-center py-4 text-muted">No reports yet. Save your first report above.</div>
           ) : (
             <table className="table table-hover table-striped mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Property</th>
-                  <th>Period</th>
-                  <th className="text-end">Rent</th>
-                  <th className="text-end">Levy</th>
-                  <th className="text-end">Bond</th>
-                  <th className="text-end">Rates</th>
-                  <th className="text-end">Expenses</th>
-                  <th className="text-end">Profit</th>
+                  <th>Property</th><th>Period</th>
+                  <th className="text-end">Rent</th><th className="text-end">Levy</th>
+                  <th className="text-end">Bond</th><th className="text-end">Rates</th>
+                  <th className="text-end">Expenses</th><th className="text-end">Profit</th>
                   <th className="text-end">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {reports.map((r) => (
+                {reports.map(r => (
                   <tr key={r.id}>
                     <td className="align-middle">{r.propertyName}</td>
-                    <td className="align-middle">
-                      <span className="badge bg-light text-dark">
-                        {MONTHS[r.month - 1]} {r.year}
-                      </span>
-                    </td>
+                    <td className="align-middle"><span className="badge bg-light text-dark">{MONTHS[r.month - 1]} {r.year}</span></td>
                     <td className="text-end align-middle">{fmt(r.rent)}</td>
                     <td className="text-end align-middle">{fmt(r.levy)}</td>
                     <td className="text-end align-middle">{fmt(r.bond)}</td>
                     <td className="text-end align-middle">{fmt(r.rates)}</td>
                     <td className="text-end align-middle">{fmt(r.expenses)}</td>
-                    <td className={`text-end align-middle fw-bold ${r.profit >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {fmt(r.profit)}
-                    </td>
+                    <td className={`text-end align-middle fw-bold ${r.profit >= 0 ? 'text-success' : 'text-danger'}`}>{fmt(r.profit)}</td>
                     <td className="text-end align-middle">
-                      <button
-                        onClick={() => handleRedownload(r)}
-                        className="btn btn-sm btn-outline-success"
-                        title="Re-download"
-                      >
-                        ↓ Download
-                      </button>
+                      <button onClick={() => handleRedownload(r)} className="btn btn-sm btn-outline-success">↓ Download</button>
                     </td>
                   </tr>
                 ))}

@@ -25,6 +25,13 @@ namespace MonoxProperty
         .HasForeignKey(l => l.PropertyId)
         .OnDelete(DeleteBehavior.Cascade);
 
+        // Self-referencing parent-child for apartment units
+modelBuilder.Entity<Property>()
+    .HasMany(p => p.UnitsList)
+    .WithOne(p => p.Parent)
+    .HasForeignKey(p => p.ParentId)
+    .OnDelete(DeleteBehavior.Cascade);
+
     modelBuilder.Entity<Property>()
         .HasMany(p => p.Expenses)
         .WithOne(e => e.Property)

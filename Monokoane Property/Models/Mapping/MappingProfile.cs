@@ -8,8 +8,9 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap< Property, PropertyDto >().ReverseMap();
-        //CreateMap< Property, OnePropertyDto >().ReverseMap();
+        CreateMap<Property, PropertyDto>()
+        .ForMember(dest => dest.Units, opt => opt.MapFrom(src => src.UnitsList.Count > 0 ? src.UnitsList.Count : src.Units))
+        .ReverseMap();
         CreateMap< Tenant, TenantDto >().ReverseMap();
         CreateMap< Lease, LeaseDto >().ReverseMap();
         CreateMap< Expense, ExpenseDto >().ReverseMap();
