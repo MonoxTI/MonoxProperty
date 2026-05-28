@@ -28,6 +28,9 @@ namespace MonoxProperty.Entities
         [Range(0, double.MaxValue)]
         public decimal Rates { get; set; }
 
+         public bool IsActive { get; set; } = true;   // 👈 KEY FIELD
+         public DateTime? DeactivatedAt { get; set; } // 👈 optional but powerful
+
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 }

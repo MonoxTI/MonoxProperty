@@ -17,18 +17,19 @@ namespace MonoxProperty.Repository
         public async Task<IEnumerable<Lease>> GetAllAsync()
         {
             return await _context.Leases
-                .ToListAsync();
+            .Where(l => l.IsActive)
+            .ToListAsync();
         }
 
         public async Task<Lease?> GetIdAsync(int id)
         {
             return await _context.Leases
-            .FirstOrDefaultAsync(p => p.Id == id);
+            .FirstOrDefaultAsync(l => l.Id == id && l.IsActive);
         }
         public async Task<Lease?> Getby(int propertyId)
         {
             return await _context.Leases
-            .FirstOrDefaultAsync(p => p.PropertyId == propertyId);
+            .FirstOrDefaultAsync(p => p.PropertyId == propertyId && p.IsActive);
         }
 
         public async Task<Lease> AddAsync(Lease lease)
@@ -46,14 +47,16 @@ namespace MonoxProperty.Repository
         }
 
         public async Task DeleteAsync(int id)
-        {
-            var lease = await _context.Leases
-            .FirstOrDefaultAsync(p => p.Id == id);
-            if(lease != null)
-            {
-                _context.Leases.Remove(lease);
-                await _context.SaveChangesAsync();
-            }
-        }
+{
+    var lease = await _context.Leases.FirstOrDefaultAsync(l => l.Id == id);
+
+    if (lease != null && lease.IsActive)
+    {
+        lease.IsActive = false;
+        lease.DeactivatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+}
     }
 }

@@ -19,6 +19,10 @@ namespace MonoxProperty
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
+            modelBuilder.Entity<Lease>()
+        .HasQueryFilter(l => l.IsActive);
+
             modelBuilder.Entity<Property>()
         .HasMany(p => p.Leases)
         .WithOne(l => l.Property)

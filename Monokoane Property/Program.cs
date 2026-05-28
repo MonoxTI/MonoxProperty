@@ -58,6 +58,8 @@ namespace MonoxProperty
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<IPropertyReportService, PropertyReportService>();
 
+            builder.Services.AddHostedService<LeaseCleanupService>();
+
             // JWT Authentication
             var jwtKey = builder.Configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException("Jwt:Key is missing.");
