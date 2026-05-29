@@ -146,5 +146,84 @@ namespace MonoxProperty.Services
         Profit = profit
     };
 }
+public async Task<PropertyPaymentStatusDto?> GetPropertyPaymentStatusAsync(string propertyName)
+{
+    var leases = await _db.Leases
+        .Include(l => l.Tenant)
+        .Include(l => l.Payments)
+        .Include(l => l.Property)
+        .Where(l => l.Property.PropertyName.ToLower() == propertyName.ToLower()
+                 && l.IsActive)
+        .ToListAsync();
+
+    if (!leases.Any()) return null;
+
+    // Find all months that have any payment across all leases for this property
+    var allPayments = leases.SelectMany(l => l.Payments).ToList();
+
+    // Build month range from earliest payment to now
+    var now = DateTime.UtcNow;
+    DateTime earliest;
+
+    if (allPayments.Any())
+        earliest = allPayments.Min(p => p.PaymentDate);
+    else
+        earliest = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    var months = new List<(int Year, int Month)>();
+    var cursor = new DateTime(earliest.Year, earliest.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+    var current = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    while (cursor <= current)
+    {
+        months.Add((cursor.Year, cursor.Month));
+        cursor = cursor.AddMonths(1);
+    }
+
+    var result = new PropertyPaymentStatusDto
+    {
+        PropertyName = propertyName,
+        Months = months.Select(m =>
+        {
+            var start = new DateTime(m.Year, m.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var end = start.AddMonths(1);
+
+            return new MonthPaymentSummary
+            {
+                Year = m.Year,
+                Month = m.Month,
+                Period = start.ToString("MMM yyyy"),
+                Tenants = leases.Select(l =>
+                {
+                    var monthPayments = l.Payments
+                        .Where(p => p.PaymentDate >= start && p.PaymentDate < end)
+                        .ToList();
+
+                    return new TenantPaymentStatus
+                    {
+                        TenantName = l.Tenant?.FullName ?? "Unknown",
+                        LeaseId = l.Id,
+                        ExpectedRent = l.Rent,
+                        ExpectedLevy = l.Levy,
+                        ExpectedBond = l.Bond,
+                        ExpectedRates = l.Rates,
+                        PaidRent = monthPayments.Any(p => p.Type == PaymentType.Rent),
+                        PaidLevy = monthPayments.Any(p => p.Type == PaymentType.Levy),
+                        PaidBond = monthPayments.Any(p => p.Type == PaymentType.Bond),
+                        PaidRates = monthPayments.Any(p => p.Type == PaymentType.Rates),
+                        RentAmount = monthPayments.Where(p => p.Type == PaymentType.Rent).Sum(p => p.Amount),
+                        LevyAmount = monthPayments.Where(p => p.Type == PaymentType.Levy).Sum(p => p.Amount),
+                        BondAmount = monthPayments.Where(p => p.Type == PaymentType.Bond).Sum(p => p.Amount),
+                        RatesAmount = monthPayments.Where(p => p.Type == PaymentType.Rates).Sum(p => p.Amount),
+                    };
+                }).ToList()
+            };
+        })
+        .OrderByDescending(m => m.Year).ThenByDescending(m => m.Month)
+        .ToList()
+    };
+
+    return result;
+}
     }
 }

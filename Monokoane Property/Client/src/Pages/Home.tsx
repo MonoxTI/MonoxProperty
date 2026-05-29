@@ -142,7 +142,9 @@ const HomeDashboard: React.FC = () => {
             <div className="list-group list-group-flush" style={{ maxHeight: '300px', overflowY: 'auto' }}>
               {loadingProperties ? <div className="text-center py-3"><div className="spinner-border spinner-border-sm" /></div>
                 : properties.length === 0 ? <div className="text-center py-3 text-muted">No properties found</div>
-                : properties.map(p => <Link key={p.id} to={`/properties/${p.id}`} className="list-group-item list-group-item-action">{p.propertyName}</Link>)}
+                : properties.map(p => <Link key={p.id} to={`/properties/${encodeURIComponent(p.propertyName)}`} className="list-group-item list-group-item-action">
+  {p.propertyName}
+</Link>)}
             </div>
           </div>
         </div>

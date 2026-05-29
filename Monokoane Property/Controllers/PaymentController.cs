@@ -37,6 +37,20 @@ namespace MonoxProperty.Controllers
             
         }
 
+        // GET /api/pay/property-status/{propertyName}
+[HttpGet("property-status/{propertyName}")]
+public async Task<IActionResult> GetPropertyPaymentStatus(string propertyName)
+{
+    if (string.IsNullOrWhiteSpace(propertyName))
+        return BadRequest(new { error = "Property name is required." });
+
+    var status = await _paymentService.GetPropertyPaymentStatusAsync(propertyName);
+    if (status == null)
+        return NotFound(new { error = $"No active leases found for '{propertyName}'." });
+
+    return Ok(status);
+}
+
         //Power bi integration endpoint
       [HttpGet("summary")]
       public async Task<IActionResult> GetSummary([FromQuery] int year, [FromQuery] int month)

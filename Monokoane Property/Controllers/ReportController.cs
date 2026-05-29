@@ -94,5 +94,23 @@ namespace MonoxProperty.Controllers
             var analytics = await _reportService.GetAnalyticsAsync();
             return Ok(analytics);
         }
+
+        // GET /api/reports/export/{propertyName}
+// Pulls all saved reports for a property and returns Excel
+[HttpGet("export/{propertyName}")]
+public async Task<IActionResult> ExportByProperty(string propertyName)
+{
+    if (string.IsNullOrWhiteSpace(propertyName))
+        return BadRequest(new { error = "Property name is required." });
+
+    var file = await _reportService.ExportByPropertyAsync(propertyName);
+    if (file == null)
+        return NotFound(new { error = $"No reports found for '{propertyName}'." });
+
+    var fileName = $"{propertyName.Replace(" ", "_")}_AllReports.xlsx";
+    return File(file,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        fileName);
+}
     }
 }

@@ -21,8 +21,10 @@ export default function PropReport() {
   const [reports, setReports] = useState<ReportHistory[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [exportProperty, setExportProperty] = useState("");
 
   const [form, setForm] = useState({
     propertyName: "", month: new Date().getMonth() + 1, year: currentYear,
@@ -52,50 +54,41 @@ export default function PropReport() {
     setError(null); setSuccess(null);
   };
 
-  const validate = () => {
-    if (!form.propertyName) { setError("Please select a property."); return false; }
-    if (!form.month || !form.year) { setError("Please select month and year."); return false; }
-    return true;
-  };
-
-  const buildPayload = () => ({
-    propertyName: form.propertyName,
-    month: Number(form.month),
-    year: Number(form.year),
-    rent, levy, bond, rates, expenses,
-  });
-
-  // Save only — no download
   const handleSave = async () => {
-    if (!validate()) return;
+    if (!form.propertyName) { setError("Please select a property."); return; }
     setSubmitting(true); setError(null); setSuccess(null);
     try {
-      const res = await api.post("/reports/save", buildPayload());
+      const res = await api.post("/reports/save", {
+        propertyName: form.propertyName, month: Number(form.month), year: Number(form.year),
+        rent, levy, bond, rates, expenses,
+      });
       setSuccess(res.data.message || "Report saved successfully.");
       fetchReports();
+      setForm(prev => ({ ...prev, rent: "", levy: "", bond: "", rates: "", expenses: "" }));
     } catch (err: any) {
       setError(err?.response?.data?.error || "Failed to save report.");
     } finally { setSubmitting(false); }
   };
 
-  // Save + download Excel
   const handleExport = async () => {
-    if (!validate()) return;
-    setSubmitting(true); setError(null); setSuccess(null);
+    if (!exportProperty) { setError("Please select a property to export."); return; }
+    setExporting(true); setError(null); setSuccess(null);
     try {
-      const res = await api.post("/reports/save-export", buildPayload(), { responseType: "blob" });
+      const res = await api.get(`/reports/export/${encodeURIComponent(exportProperty)}`, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `${form.propertyName}_${MONTHS[Number(form.month) - 1]}_${form.year}.xlsx`);
+      link.setAttribute("download", `${exportProperty}_AllReports.xlsx`);
       document.body.appendChild(link); link.click(); link.remove();
       window.URL.revokeObjectURL(url);
-      setSuccess("Report saved and downloaded successfully.");
-      fetchReports();
-      setForm(prev => ({ ...prev, rent: "", levy: "", bond: "", rates: "", expenses: "" }));
+      setSuccess(`Excel report for ${exportProperty} downloaded successfully.`);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Failed to generate report.");
-    } finally { setSubmitting(false); }
+      if (err?.response?.status === 404) {
+        setError(`No saved reports found for "${exportProperty}". Save some reports first.`);
+      } else {
+        setError("Failed to generate Excel report.");
+      }
+    } finally { setExporting(false); }
   };
 
   const handleRedownload = async (report: ReportHistory) => {
@@ -113,91 +106,107 @@ export default function PropReport() {
   return (
     <div className="container-fluid py-3" style={{ maxWidth: '1400px' }}>
       <Navigation />
-
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4>Property Report</h4>
-        <span className="badge bg-secondary">{MONTHS[form.month - 1]} {form.year}</span>
+        <h4>Property Reports</h4>
       </div>
 
-      <div className="card shadow-sm mb-4">
-        <div className="card-header"><h6 className="mb-0">Generate Monthly Report</h6></div>
-        <div className="card-body">
+      {error && <div className="alert alert-danger alert-dismissible fade show mb-3">{error}<button type="button" className="btn-close" onClick={() => setError(null)} /></div>}
+      {success && <div className="alert alert-success alert-dismissible fade show mb-3">{success}<button type="button" className="btn-close" onClick={() => setSuccess(null)} /></div>}
 
-          {/* Row 1: Property + Month + Year */}
-          <div className="row g-3 mb-3">
-            <div className="col-12 col-md-4">
-              <label className="form-label small text-muted text-uppercase fw-semibold">Property</label>
-              <select name="propertyName" value={form.propertyName} onChange={handleChange} className="form-select" required>
-                <option value="">Select property</option>
-                {properties.map(p => <option key={p.propertyName} value={p.propertyName}>{p.propertyName}</option>)}
-              </select>
+      <div className="row g-3 mb-4">
+        {/* Save report card */}
+        <div className="col-12 col-lg-7">
+          <div className="card shadow-sm h-100">
+            <div className="card-header">
+              <h6 className="mb-0">💾 Save Monthly Report</h6>
+              <small className="text-muted">Record figures for a property and month</small>
             </div>
-            <div className="col-6 col-md-4">
-              <label className="form-label small text-muted text-uppercase fw-semibold">Month</label>
-              <select name="month" value={form.month} onChange={handleChange} className="form-select">
-                {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-              </select>
-            </div>
-            <div className="col-6 col-md-4">
-              <label className="form-label small text-muted text-uppercase fw-semibold">Year</label>
-              <select name="year" value={form.year} onChange={handleChange} className="form-select">
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Row 2: Amounts */}
-          <div className="row g-3 mb-3">
-            {[{ name: "rent", label: "Rent (R)" }, { name: "levy", label: "Levy (R)" },
-              { name: "bond", label: "Bond (R)" }, { name: "rates", label: "Rates (R)" },
-              { name: "expenses", label: "Expenses (R)" }].map(({ name, label }) => (
-              <div className="col-6 col-md" key={name}>
-                <label className="form-label small text-muted text-uppercase fw-semibold">{label}</label>
-                <input type="number" name={name} value={(form as any)[name]} onChange={handleChange}
-                  placeholder="0.00" min="0" step="0.01" className="form-control" />
+            <div className="card-body">
+              <div className="row g-3 mb-3">
+                <div className="col-12 col-md-4">
+                  <label className="form-label small text-muted text-uppercase fw-semibold">Property</label>
+                  <select name="propertyName" value={form.propertyName} onChange={handleChange} className="form-select">
+                    <option value="">Select property</option>
+                    {properties.map(p => <option key={p.propertyName} value={p.propertyName}>{p.propertyName}</option>)}
+                  </select>
+                </div>
+                <div className="col-6 col-md-4">
+                  <label className="form-label small text-muted text-uppercase fw-semibold">Month</label>
+                  <select name="month" value={form.month} onChange={handleChange} className="form-select">
+                    {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                  </select>
+                </div>
+                <div className="col-6 col-md-4">
+                  <label className="form-label small text-muted text-uppercase fw-semibold">Year</label>
+                  <select name="year" value={form.year} onChange={handleChange} className="form-select">
+                    {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
               </div>
-            ))}
-          </div>
-
-          {/* Profit preview */}
-          <div className={`alert mb-3 ${profit >= 0 ? 'alert-success' : 'alert-danger'}`}>
-            <div className="d-flex justify-content-between align-items-center">
-              <span className="small text-muted">Projected Profit</span>
-              <span className={`fw-bold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>{fmt(profit)}</span>
-            </div>
-          </div>
-
-          {error && (
-            <div className="alert alert-danger alert-dismissible fade show mb-3">
-              {error}<button type="button" className="btn-close" onClick={() => setError(null)} />
-            </div>
-          )}
-          {success && (
-            <div className="alert alert-success alert-dismissible fade show mb-3">
-              {success}<button type="button" className="btn-close" onClick={() => setSuccess(null)} />
-            </div>
-          )}
-
-          {/* Two separate action buttons */}
-          <div className="row g-2">
-            <div className="col-12 col-md-6">
+              <div className="row g-3 mb-3">
+                {[{ name: "rent", label: "Rent (R)" }, { name: "levy", label: "Levy (R)" },
+                  { name: "bond", label: "Bond (R)" }, { name: "rates", label: "Rates (R)" },
+                  { name: "expenses", label: "Expenses (R)" }].map(({ name, label }) => (
+                  <div className="col-6 col-md" key={name}>
+                    <label className="form-label small text-muted text-uppercase fw-semibold">{label}</label>
+                    <input type="number" name={name} value={(form as any)[name]} onChange={handleChange}
+                      placeholder="0.00" min="0" step="0.01" className="form-control" />
+                  </div>
+                ))}
+              </div>
+              <div className={`alert mb-3 ${profit >= 0 ? 'alert-success' : 'alert-danger'}`}>
+                <div className="d-flex justify-content-between align-items-center">
+                  <span className="small text-muted">Projected Profit</span>
+                  <span className={`fw-bold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>{fmt(profit)}</span>
+                </div>
+              </div>
               <button type="button" onClick={handleSave} disabled={submitting} className="btn btn-primary w-100">
                 {submitting ? <><span className="spinner-border spinner-border-sm me-2" />Saving...</> : '💾 Save Report'}
               </button>
             </div>
-            <div className="col-12 col-md-6">
-              <button type="button" onClick={handleExport} disabled={submitting} className="btn btn-success w-100">
-                {submitting ? <><span className="spinner-border spinner-border-sm me-2" />Generating...</> : '📥 Save & Download Excel'}
+          </div>
+        </div>
+
+        {/* Export Excel card */}
+        <div className="col-12 col-lg-5">
+          <div className="card shadow-sm h-100">
+            <div className="card-header">
+              <h6 className="mb-0">📥 Export to Excel</h6>
+              <small className="text-muted">Downloads all saved months for a property</small>
+            </div>
+            <div className="card-body d-flex flex-column">
+              <p className="text-muted small mb-3">
+                Select a property and click export. The Excel file will contain one row per saved month
+                with all figures pulled automatically from your saved reports.
+              </p>
+              <div className="mb-3">
+                <label className="form-label small text-muted text-uppercase fw-semibold">Property</label>
+                <select value={exportProperty} onChange={e => { setExportProperty(e.target.value); setError(null); }} className="form-select">
+                  <option value="">Select property</option>
+                  {properties.map(p => <option key={p.propertyName} value={p.propertyName}>{p.propertyName}</option>)}
+                </select>
+              </div>
+              {exportProperty && (
+                <div className="alert alert-info py-2 mb-3">
+                  <small>
+                    <strong>{reports.filter(r => r.propertyName === exportProperty).length}</strong> saved
+                    {reports.filter(r => r.propertyName === exportProperty).length === 1 ? ' report' : ' reports'} found
+                    for <strong>{exportProperty}</strong>
+                  </small>
+                </div>
+              )}
+              <button type="button" onClick={handleExport} disabled={exporting || !exportProperty} className="btn btn-success w-100 mt-auto">
+                {exporting ? <><span className="spinner-border spinner-border-sm me-2" />Generating...</> : '📥 Download Excel Report'}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Past reports */}
+      {/* Past reports table */}
       <div className="card shadow-sm">
         <div className="card-header d-flex justify-content-between align-items-center">
-          <h6 className="mb-0">Past Reports ({reports.length})</h6>
+          <h6 className="mb-0">Saved Reports ({reports.length})</h6>
           <button onClick={fetchReports} className="btn btn-sm btn-outline-secondary" disabled={loadingReports}>
             {loadingReports ? 'Refreshing...' : '↻ Refresh'}
           </button>
@@ -230,7 +239,7 @@ export default function PropReport() {
                     <td className="text-end align-middle">{fmt(r.expenses)}</td>
                     <td className={`text-end align-middle fw-bold ${r.profit >= 0 ? 'text-success' : 'text-danger'}`}>{fmt(r.profit)}</td>
                     <td className="text-end align-middle">
-                      <button onClick={() => handleRedownload(r)} className="btn btn-sm btn-outline-success">↓ Download</button>
+                      <button onClick={() => handleRedownload(r)} className="btn btn-sm btn-outline-success">↓ Single</button>
                     </td>
                   </tr>
                 ))}

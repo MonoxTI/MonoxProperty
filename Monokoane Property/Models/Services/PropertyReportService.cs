@@ -39,6 +39,30 @@ namespace MonoxProperty.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task<byte[]?> ExportByPropertyAsync(string propertyName)
+{
+    var reports = await _db.PropertyReports
+        .Where(r => r.PropertyName.ToLower() == propertyName.ToLower())
+        .OrderBy(r => r.Year)
+        .ThenBy(r => r.Month)
+        .ToListAsync();
+
+    if (!reports.Any()) return null;
+
+    var excelData = reports.Select(r => new ExcelDto
+    {
+        PropertyName = $"{r.PropertyName} — {new DateTime(r.Year, r.Month, 1):MMM yyyy}",
+        Rent = r.Rent,
+        Levy = r.Levy,
+        Bond = r.Bond,
+        Rates = r.Rates,
+        Expenses = r.Expenses,
+        Profit = r.Profit
+    }).ToList();
+
+    return await _excel.ExportPropertyFinanceAsync(excelData);
+}
+
         // Save + return Excel bytes
         public async Task<byte[]> SaveAndExportAsync(SaveReportDto dto)
         {
@@ -167,5 +191,6 @@ namespace MonoxProperty.Services
                 UnderperformingProperties = underperforming
             };
         }
+        
     }
 }
