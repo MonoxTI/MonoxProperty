@@ -36,8 +36,10 @@ namespace MonoxProperty
 
             // DbContext
             builder.Services.AddDbContext<ApplicationDB>(options =>
-                options.UseNpgsql(
-                    builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(
+                builder.Configuration.GetConnectionString("DefaultConnection"))
+                .ConfigureWarnings(w => w.Ignore(
+                Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
             // AutoMapper
             builder.Services.AddAutoMapper(typeof(MappingProfile));
