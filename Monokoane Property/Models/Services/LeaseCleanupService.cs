@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using MonoxProperty;
 
 public class LeaseCleanupService : BackgroundService
 {

@@ -66,25 +66,7 @@ namespace MonoxProperty.Services
         // Save + return Excel bytes
         public async Task<byte[]> SaveAndExportAsync(SaveReportDto dto)
         {
-            var profit = dto.Rent - (dto.Levy + dto.Bond + dto.Rates + dto.Expenses);
-
-            var report = new PropertyReport
-            {
-                PropertyName = dto.PropertyName,
-                Month = dto.Month,
-                Year = dto.Year,
-                Rent = dto.Rent,
-                Levy = dto.Levy,
-                Bond = dto.Bond,
-                Rates = dto.Rates,
-                Expenses = dto.Expenses,
-                Profit = profit,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _db.PropertyReports.Add(report);
-            await _db.SaveChangesAsync();
-
+            var profit = dto.Rent - (dto.Levy + dto.Bond + dto.Rates + dto.Expenses); // ← add this line
             var excelData = new List<ExcelDto>
             {
                 new ExcelDto
