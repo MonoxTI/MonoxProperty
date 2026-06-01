@@ -17,7 +17,7 @@ import ExpenseLookupDelete from './Pages/DeleteExpense.tsx';
 import RecordPayment from './Pages/Monthly.tsx';
 import HomeDashboard from './Pages/Home.tsx';
 import PropReport from './Pages/PropReport.tsx';
-import PropertyDetail from './Pages/PropertyDetail.tsx';
+import PropertyDetail from './Pages/Propertydetail.tsx';
 
 function App() {
   return (
