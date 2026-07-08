@@ -8,7 +8,7 @@ RUN npm install
 COPY . .
 
 # Hardcode production API URL
-ENV VITE_API_URL=https://monokoane-api.azurewebsites.net/api
+ENV VITE_API_URL=http://100.105.161.30:5000
 
 RUN npm run build
 
