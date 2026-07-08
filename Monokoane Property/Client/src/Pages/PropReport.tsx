@@ -39,13 +39,13 @@ export default function PropReport() {
   const profit = rent - (levy + bond + rates + expenses);
 
   useEffect(() => {
-    api.get("/property").then(res => setProperties(res.data)).catch(() => {});
+    api.get("/api/property").then(res => setProperties(res.data)).catch(() => {});
     fetchReports();
   }, []);
 
   const fetchReports = async () => {
     setLoadingReports(true);
-    try { const res = await api.get("/reports"); setReports(res.data); }
+    try { const res = await api.get("/api/reports"); setReports(res.data); }
     catch { } finally { setLoadingReports(false); }
   };
 
@@ -58,7 +58,7 @@ export default function PropReport() {
     if (!form.propertyName) { setError("Please select a property."); return; }
     setSubmitting(true); setError(null); setSuccess(null);
     try {
-      const res = await api.post("/reports/save", {
+      const res = await api.post("/api/reports/save", {
         propertyName: form.propertyName, month: Number(form.month), year: Number(form.year),
         rent, levy, bond, rates, expenses,
       });
@@ -74,7 +74,7 @@ export default function PropReport() {
     if (!exportProperty) { setError("Please select a property to export."); return; }
     setExporting(true); setError(null); setSuccess(null);
     try {
-      const res = await api.get(`/reports/export/${encodeURIComponent(exportProperty)}`, { responseType: "blob" });
+      const res = await api.get(`/api/reports/export/${encodeURIComponent(exportProperty)}`, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -93,7 +93,7 @@ export default function PropReport() {
 
   const handleRedownload = async (report: ReportHistory) => {
     try {
-      const res = await api.get(`/reports/${report.id}/download`, { responseType: "blob" });
+      const res = await api.get(`/api/reports/${report.id}/download`, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;

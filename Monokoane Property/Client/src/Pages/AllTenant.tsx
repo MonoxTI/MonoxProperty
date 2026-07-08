@@ -11,7 +11,7 @@ const AllTenants: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get('/tenant')
+    api.get('/api/tenant')
       .then(res => setTenants(Array.isArray(res.data) ? res.data : []))
       .catch(err => setError(err?.response?.data?.message || 'Failed to load tenants.'))
       .finally(() => setLoading(false));

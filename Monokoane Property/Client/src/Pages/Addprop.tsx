@@ -22,7 +22,7 @@ const AddProperty: React.FC = () => {
 
     try {
       setLoading(true);
-      await api.post('/property', { propertyName, location, apartments, units: apartments ? units : 0, occupied });
+      await api.post('/api/property', { propertyName, location, apartments, units: apartments ? units : 0, occupied });
       navigate('/home');
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || 'Failed to create property.');

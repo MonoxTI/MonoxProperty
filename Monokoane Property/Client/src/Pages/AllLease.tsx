@@ -11,7 +11,7 @@ const LeasesList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get('/lease')
+    api.get('/api/lease')
       .then(res => setLeases(Array.isArray(res.data) ? res.data : []))
       .catch(err => setError(err?.response?.data?.message || 'Failed to load leases.'))
       .finally(() => setLoading(false));

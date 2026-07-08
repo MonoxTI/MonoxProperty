@@ -33,9 +33,9 @@ const RecordPayment: React.FC = () => {
     const fetchData = async () => {
       try {
         const [leasesRes, propertiesRes, tenantsRes] = await Promise.all([
-          api.get('/lease'),
-          api.get('/property'),
-          api.get('/tenant'),
+          api.get('/api/lease'),
+          api.get('/api/property'),
+          api.get('/api/tenant'),
         ]);
         const propertyMap = new Map(propertiesRes.data.map((p: any) => [p.id, p.propertyName]));
         const tenantMap = new Map(tenantsRes.data.map((t: any) => [t.id, t.fullName]));
@@ -78,7 +78,7 @@ const RecordPayment: React.FC = () => {
 
     try {
       setLoading(true);
-      await api.post('/pay/record', { LeaseId: leaseId, Type: paymentType, Amount: amountNum });
+      await api.post('/api/pay/record', { LeaseId: leaseId, Type: paymentType, Amount: amountNum });
       setSuccess(true);
       setTimeout(() => navigate("/home"), 2000);
     } catch (err: any) {

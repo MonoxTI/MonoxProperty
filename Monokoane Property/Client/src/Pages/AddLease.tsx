@@ -25,7 +25,7 @@ const AddLease: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.all([api.get('/property'), api.get('/tenant')])
+    Promise.all([api.get('/api/property'), api.get('/api/tenant')])
       .then(([pRes, tRes]) => { setProperties(pRes.data); setTenants(tRes.data); })
       .catch(() => setError('Failed to load properties or tenants. Please refresh.'))
       .finally(() => setIsLoadingData(false));
@@ -47,7 +47,7 @@ const AddLease: React.FC = () => {
 
     try {
       setLoading(true);
-      await api.post('/lease/add', {
+      await api.post('/api/lease/add', {
         propertyId, tenantId,
         start: new Date(start).toISOString(),
         end: new Date(end).toISOString(),

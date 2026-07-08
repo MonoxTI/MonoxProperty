@@ -19,7 +19,7 @@ const LeasesManagement: React.FC = () => {
 
   const fetchLeases = async () => {
     try {
-      const res = await api.get('/lease');
+      const res = await api.get('/api/lease');
       setLeases(Array.isArray(res.data) ? res.data : []);
     } catch (err: any) {
       setErrorLeases(err?.response?.data?.message || 'Failed to load leases.');
@@ -34,7 +34,7 @@ const LeasesManagement: React.FC = () => {
     if (isNaN(id) || id <= 0) return setErrorSearch('Please enter a valid lease ID');
     setLoadingSearch(true); setErrorSearch(null); setLease(null); setDeleteSuccess(null);
     try {
-      const res = await api.get(`/lease/${id}`);
+      const res = await api.get(`/api/lease/${id}`);
       setLease(res.data);
     } catch (err: any) {
       setErrorSearch(err?.response?.status === 404 ? 'Lease not found' : err?.message || 'Failed to load lease');
@@ -45,7 +45,7 @@ const LeasesManagement: React.FC = () => {
     if (!lease || !window.confirm(`Delete Lease #${lease.id}? This cannot be undone.`)) return;
     setDeleteLoading(true); setErrorSearch(null); setDeleteSuccess(null);
     try {
-      await api.delete(`/lease/${lease.id}`);
+      await api.delete(`/api/lease/${lease.id}`);
       setDeleteSuccess(`Lease #${lease.id} deleted successfully.`);
       setLease(null); setLeaseId('');
       setTimeout(fetchLeases, 1000);

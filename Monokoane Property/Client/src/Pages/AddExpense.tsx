@@ -19,7 +19,7 @@ const AddExpense: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/property')
+    api.get('/api/property')
       .then(res => setProperties(Array.isArray(res.data) ? res.data : []))
       .catch(() => setError('Failed to load properties. Please refresh.'))
       .finally(() => setIsLoadingData(false));
@@ -35,7 +35,7 @@ const AddExpense: React.FC = () => {
 
     try {
       setLoading(true);
-      await api.post('/expense', { propertyId, description, amount: amountNum, date: new Date(date).toISOString() });
+      await api.post('/api/expense', { propertyId, description, amount: amountNum, date: new Date(date).toISOString() });
       setSuccess(true);
       setTimeout(() => navigate('/home'), 2000);
     } catch (err: any) {

@@ -37,7 +37,7 @@ const ExpensesManagement: React.FC = () => {
     if (isNaN(id) || id <= 0) return setErrorSearch('Please enter a valid expense ID');
     setLoadingSearch(true); setErrorSearch(null); setExpense(null); setDeleteSuccess(null);
     try {
-      const res = await api.get(`/expense/${id}`);
+      const res = await api.get(`/api/expense/${id}`);
       setExpense(res.data);
     } catch (err: any) {
       setErrorSearch(err?.response?.status === 404 ? 'Expense not found' : err?.message || 'Failed to load expense');
@@ -48,7 +48,7 @@ const ExpensesManagement: React.FC = () => {
     if (!expense || !window.confirm(`Delete Expense #${expense.id}? This cannot be undone.`)) return;
     setDeleteLoading(true); setErrorSearch(null); setDeleteSuccess(null);
     try {
-      await api.delete(`/expense/${expense.id}`);
+      await api.delete(`/api/expense/${expense.id}`);
       setDeleteSuccess(`Expense #${expense.id} deleted successfully.`);
       setExpense(null); setExpenseId('');
       setTimeout(fetchExpenses, 1000);

@@ -19,7 +19,7 @@ const TenantsManagement: React.FC = () => {
 
   const fetchTenants = async () => {
     try {
-      const res = await api.get('/tenant');
+      const res = await api.get('/api/tenant');
       setTenants(Array.isArray(res.data) ? res.data : []);
     } catch (err: any) {
       setErrorTenants(err?.response?.data?.message || 'Failed to load tenants.');
@@ -36,7 +36,7 @@ const TenantsManagement: React.FC = () => {
     if (isNaN(id) || id <= 0) return setErrorSearch('Please enter a valid tenant ID');
     setLoadingSearch(true); setErrorSearch(null); setTenant(null); setDeleteSuccess(null);
     try {
-      const res = await api.get(`/tenant/${id}`);
+      const res = await api.get(`/api/tenant/${id}`);
       setTenant(res.data);
     } catch (err: any) {
       setErrorSearch(err?.response?.status === 404 ? 'Tenant not found' : err?.message || 'Failed to load tenant');
@@ -47,7 +47,7 @@ const TenantsManagement: React.FC = () => {
     if (!tenant || !window.confirm(`Delete "${tenant.fullName}"? This cannot be undone.`)) return;
     setDeleteLoading(true); setErrorSearch(null); setDeleteSuccess(null);
     try {
-      await api.delete(`/tenant/${tenant.id}`);
+      await api.delete(`/api/tenant/${tenant.id}`);
       setDeleteSuccess(`Tenant "${tenant.fullName}" deleted successfully.`);
       setTenant(null); setTenantId('');
       setTimeout(fetchTenants, 1000);

@@ -34,7 +34,7 @@ const AddTenant: React.FC = () => {
     if (!validate()) return;
     setLoading(true); setError(null);
     try {
-      await api.post('/tenant', formData);
+      await api.post('/api/tenant', formData);
       setSuccess(true);
       setTimeout(() => navigate('/home'), 2000);
     } catch (err: any) {

@@ -19,7 +19,7 @@ const AllProperties: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get('/property')
+    api.get('/api/property')
       .then(res => setProperties(Array.isArray(res.data) ? res.data : []))
       .catch(err => setError(err?.response?.data?.message || 'Failed to load properties.'))
       .finally(() => setLoading(false));

@@ -60,7 +60,7 @@ const PropertyDetail: React.FC = () => {
 
   useEffect(() => {
     if (!propertyName) return;
-    api.get(`/pay/property-status/${encodeURIComponent(propertyName)}`)
+    api.get(`/api/pay/property-status/${encodeURIComponent(propertyName)}`)
       .then(res => {
         setData(res.data);
         // Auto-expand the most recent month

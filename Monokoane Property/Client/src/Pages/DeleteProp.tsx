@@ -19,7 +19,7 @@ const PropertiesManagement: React.FC = () => {
 
   const fetchProperties = async () => {
     try {
-      const res = await api.get('/property');
+      const res = await api.get('/api/property');
       setProperties(Array.isArray(res.data) ? res.data : []);
     } catch (err: any) {
       setErrorProperties(err?.response?.data?.message || 'Failed to load properties.');
@@ -33,7 +33,7 @@ const PropertiesManagement: React.FC = () => {
     if (!searchName.trim()) return setErrorSearch('Please enter a property name');
     setLoadingSearch(true); setErrorSearch(null); setProperty(null); setDeleteSuccess(null);
     try {
-      const res = await api.post('/property/byname', { propertyName: searchName.trim() });
+      const res = await api.post('/api/property/byname', { propertyName: searchName.trim() });
       setProperty(res.data);
     } catch (err: any) {
       setErrorSearch(err?.response?.status === 404 ? 'Property not found' : err?.message || 'Failed to fetch property');
@@ -44,7 +44,7 @@ const PropertiesManagement: React.FC = () => {
     if (!property || !window.confirm(`Delete "${property.propertyName}"? This cannot be undone.`)) return;
     setDeleteLoading(true); setErrorSearch(null); setDeleteSuccess(null);
     try {
-      await api.delete(`/property/${property.propertyName}`);
+      await api.delete(`/api/property/${property.propertyName}`);
       setDeleteSuccess(`Property "${property.propertyName}" deleted successfully.`);
       setProperty(null); setSearchName('');
       setTimeout(fetchProperties, 1000);
