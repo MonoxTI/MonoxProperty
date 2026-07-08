@@ -27,7 +27,7 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const { data } = await api.post<LoginResponse>('/auth/login', formData);
+      const { data } = await api.post<LoginResponse>('/api/auth/login', formData);
 
       const token = data.token || data.jwt;
 
