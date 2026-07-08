@@ -38,7 +38,7 @@ const HomeDashboard: React.FC = () => {
 
   const downloadFinanceExcel = async () => {
     try {
-      const res = await api.get('/pay/export/finance', { responseType: 'blob' });
+      const res = await api.get('/api/pay/export/finance', { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url; a.download = 'property_finance.xlsx';
@@ -58,10 +58,10 @@ const HomeDashboard: React.FC = () => {
     const month = now.getMonth() + 1;
 
     Promise.all([
-      api.get('/property'),
-      api.get('/tenant'),
-      api.get('/lease'),
-      api.get(`/pay/summary?year=${year}&month=${month}`),
+      api.get('/api/property'),
+      api.get('/api/tenant'),
+      api.get('/api/lease'),
+      api.get(`/api/pay/summary?year=${year}&month=${month}`),
     ]).then(([p, t, l, s]) => {
       setProperties(p.data);
       setTenants(t.data);
@@ -74,7 +74,7 @@ const HomeDashboard: React.FC = () => {
       setLoadingLeases(false); setLoadingSummary(false);
     });
 
-    api.get('/reports/analytics')
+    api.get('/api/reports/analytics')
       .then(r => setAnalytics(r.data))
       .catch(() => {})
       .finally(() => setLoadingAnalytics(false));
