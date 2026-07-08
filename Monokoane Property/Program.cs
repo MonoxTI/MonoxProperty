@@ -91,7 +91,8 @@ namespace MonoxProperty
                     policy.WithOrigins(
                         "http://localhost:5173",
                         "http://localhost:5174",
-                        "https://monokoane-app.azurewebsites.net"
+                        "https://monokoane-app.azurewebsites.net",
+                        "http://100.105.161.30:5000"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
