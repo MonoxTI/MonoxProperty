@@ -21,7 +21,7 @@ const ExpensesManagement: React.FC = () => {
 
   const fetchExpenses = async () => {
     try {
-      const [expRes, propRes] = await Promise.all([api.get('/expense/All'), api.get('/property')]);
+      const [expRes, propRes] = await Promise.all([api.get('/api/expense/All'), api.get('/api/property')]);
       setExpenses(Array.isArray(expRes.data) ? expRes.data : []);
       setProperties(Array.isArray(propRes.data) ? propRes.data : []);
     } catch (err: any) {
